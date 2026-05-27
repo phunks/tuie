@@ -832,87 +832,89 @@ impl std::fmt::Display for StyleParseError {
     }
 }
 impl std::error::Error for StyleParseError {}
+impl From<String> for StyleParseError {
+    fn from(s: String) -> Self { Self(s) }
+}
+impl From<&str> for StyleParseError {
+    fn from(s: &str) -> Self { Self(s.to_string()) }
+}
 
+/// Parses a style spec like `bold-red-on-blue` or `single-red-underline`.
+/// Tokens are separated by dashes, underscores, or whitespace.
 impl std::str::FromStr for Style {
     type Err = StyleParseError;
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let mut style = Style::new();
-        for token in s.split(|c: char| c == ',' || c.is_whitespace()) {
-            let token = token.trim();
-            if token.is_empty() {
-                continue;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        type Iter<'a> = dyn Iterator<Item = &'a str> + 'a;
+
+        fn parse_color(iter: &mut Iter<'_>, token: &str) -> Result<Color, StyleParseError> {
+            if token == "bright" {
+                let next = iter.next().ok_or("'bright' missing colour")?;
+                format!("bright-{next}")
+                    .parse()
+                    .map_err(|_| format!("invalid colour 'bright-{next}'").into())
             }
-            match token {
-                "bold" => style.set_bold(true),
-                "italic" => style.set_italic(true),
-                "reverse" => style.set_reverse(true),
-                "strikethrough" => style.set_strikethrough(true),
-                "dim" => style.set_dim(true),
-                "underline" => {
-                    if style.underline.is_none() {
-                        style.underline = Some(UnderlineType::Single);
-                    }
-                }
-                _ if token.starts_with("underline:") => {
-                    let value = &token["underline:".len()..];
-                    match value {
-                        "single" => style.underline = Some(UnderlineType::Single),
-                        "double" => style.underline = Some(UnderlineType::Double),
-                        "dotted" => style.underline = Some(UnderlineType::Dotted),
-                        "dashed" => style.underline = Some(UnderlineType::Dashed),
-                        "curly" => style.underline = Some(UnderlineType::Curly),
-                        _ => {
-                            let color: Color = value.parse().map_err(|_| {
-                                StyleParseError(format!(
-                                    "invalid underline value '{}', expected style name or color",
-                                    value
-                                ))
-                            })?;
-                            style.underline_color = Some(color);
-                            if style.underline.is_none() {
-                                style.underline = Some(UnderlineType::Single);
-                            }
-                        }
-                    }
-                }
-                _ if token.starts_with("blend:") => {
-                    let value = &token["blend:".len()..];
-                    let percent: u8 = value.parse().map_err(|_| {
-                        StyleParseError(format!("invalid blend value '{}', expected 0-100", value))
-                    })?;
-                    if percent > 100 {
-                        return Err(StyleParseError(format!(
-                            "blend value {} out of range, expected 0-100", percent
-                        )));
-                    }
-                    style.set_blend(Some(percent));
-                }
-                _ if token.starts_with("fg:") => {
-                    let value = &token["fg:".len()..];
-                    style.fg = Some(value.parse().map_err(|_| {
-                        StyleParseError(format!("invalid fg color '{}'", value))
-                    })?);
-                }
-                _ if token.starts_with("bg:") => {
-                    let value = &token["bg:".len()..];
-                    style.bg = Some(value.parse().map_err(|_| {
-                        StyleParseError(format!("invalid bg color '{}'", value))
-                    })?);
-                }
-                _ => {
-                    match token.parse::<Color>() {
-                        Ok(color) => style.fg = Some(color),
-                        Err(_) => {
-                            return Err(StyleParseError(format!(
-                                "unknown style token '{}'",
-                                token
-                            )));
-                        }
-                    }
-                }
+            else {
+                token.parse().map_err(|_| format!("invalid colour '{token}'").into())
             }
         }
-        Ok(style)
+
+        fn parse_bg(iter: &mut Iter<'_>, style: &mut Style) -> Result<(), StyleParseError> {
+            let mut next = iter.next().ok_or("'on' missing colour")?;
+            if let Some(rest) = next.strip_suffix('%') {
+                let pct: u8 = rest.parse().map_err(|_| format!("invalid blend '{next}'"))?;
+                if pct > 100 {
+                    return Err(format!("blend '{next}' out of range 0-100").into());
+                }
+                style.set_blend(Some(pct));
+                next = iter.next().ok_or("blend missing colour")?;
+            }
+            style.bg = Some(parse_color(iter, next)?);
+            Ok(())
+        }
+
+        fn parse_ul(
+            iter: &mut Iter<'_>,
+            line_style: UnderlineType,
+            style: &mut Style,
+        ) -> Result<(), StyleParseError> {
+            let head = iter.next().ok_or("line-style not closed by 'underline'")?;
+            style.underline = Some(line_style);
+            if head != "underline" {
+                style.underline_color = Some(parse_color(iter, head)?);
+                let close = iter.next().ok_or("underline piece missing 'underline'")?;
+                if close != "underline" {
+                    return Err(format!("expected 'underline' after colour, got '{close}'").into());
+                }
+            }
+            Ok(())
+        }
+
+        let mut iter = s
+            .split(|c: char| c == '-' || c == '_' || c.is_whitespace())
+            .filter(|t| !t.is_empty());
+
+        let mut s = Style::new();
+
+        while let Some(token) = iter.next() {
+            match token {
+                "bold" => s.set_bold(true),
+                "italic" => s.set_italic(true),
+                "dim" => s.set_dim(true),
+                "strikethrough" => s.set_strikethrough(true),
+                "reverse" => s.set_reverse(true),
+                "single" => parse_ul(&mut iter, UnderlineType::Single, &mut s)?,
+                "double" => parse_ul(&mut iter, UnderlineType::Double, &mut s)?,
+                "curly" => parse_ul(&mut iter, UnderlineType::Curly, &mut s)?,
+                "dotted" => parse_ul(&mut iter, UnderlineType::Dotted, &mut s)?,
+                "dashed" => parse_ul(&mut iter, UnderlineType::Dashed, &mut s)?,
+                "underline" => s.underline = Some(UnderlineType::Single),
+                "on" => parse_bg(&mut iter, &mut s)?,
+                _ => s.fg = Some(parse_color(&mut iter, token)?),
+            }
+        }
+
+        Ok(s)
     }
 }
 

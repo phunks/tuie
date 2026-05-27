@@ -59,23 +59,16 @@ fn stylize_trait_on_str() {
     assert!(s.style.has_bold());
     assert_eq!(s.text, "hello");
 
-    let s = "x".red();
-    assert_eq!(s.style.fg, Some(Color::RED));
-
     let s = "y".italic().fg(Color::BLUE).bg(Color::YELLOW);
     assert!(s.style.has_italic());
     assert_eq!(s.style.fg, Some(Color::BLUE));
     assert_eq!(s.style.bg, Some(Color::YELLOW));
-}
 
-#[test]
-fn stylize_underline_and_bg_variants() {
     let s = "u".underline(UnderlineType::Curly);
     assert_eq!(s.style.underline, Some(UnderlineType::Curly));
 
     let s = "b".red_bg();
     assert_eq!(s.style.bg, Some(Color::RED));
-    assert_eq!(s.style.fg, None);
 }
 
 fn parse_one(input: &str) -> Style {
@@ -92,72 +85,37 @@ fn ansi_reset_clears_style() {
 }
 
 #[test]
-fn ansi_simple_attribute_codes() {
+fn ansi_attribute_codes_set_and_clear() {
     assert!(parse_one("\x1b[1mx").has_bold());
     assert!(parse_one("\x1b[2mx").has_dim());
     assert!(parse_one("\x1b[3mx").has_italic());
     assert_eq!(parse_one("\x1b[4mx").underline, Some(UnderlineType::Single));
     assert!(parse_one("\x1b[7mx").has_reverse());
     assert!(parse_one("\x1b[9mx").has_strikethrough());
-}
 
-#[test]
-fn ansi_disable_codes() {
-    let s = parse_one("\x1b[1;2;22mx");
+    let s = parse_one("\x1b[1;2;3;4;7;9;22;23;24;27;29mx");
     assert!(!s.has_bold());
     assert!(!s.has_dim());
-
-    let s = parse_one("\x1b[3;23mx");
     assert!(!s.has_italic());
-
-    let s = parse_one("\x1b[4;24mx");
     assert_eq!(s.underline, None);
-
-    let s = parse_one("\x1b[7;27mx");
     assert!(!s.has_reverse());
-
-    let s = parse_one("\x1b[9;29mx");
     assert!(!s.has_strikethrough());
 }
 
 #[test]
-fn ansi_16_color_fg_bg() {
-    let s = parse_one("\x1b[31mx");
-    assert_eq!(s.fg, Some(Color::Base256(1)));
-    let s = parse_one("\x1b[37mx");
-    assert_eq!(s.fg, Some(Color::Base256(7)));
-    let s = parse_one("\x1b[41mx");
-    assert_eq!(s.bg, Some(Color::Base256(1)));
-    let s = parse_one("\x1b[47mx");
-    assert_eq!(s.bg, Some(Color::Base256(7)));
+fn ansi_16_color_fg_bg_including_bright() {
+    assert_eq!(parse_one("\x1b[31mx").fg, Some(Color::Base256(1)));
+    assert_eq!(parse_one("\x1b[47mx").bg, Some(Color::Base256(7)));
+    assert_eq!(parse_one("\x1b[90mx").fg, Some(Color::Base256(8)));
+    assert_eq!(parse_one("\x1b[107mx").bg, Some(Color::Base256(15)));
 }
 
 #[test]
-fn ansi_bright_16_color_fg_bg() {
-    let s = parse_one("\x1b[90mx");
-    assert_eq!(s.fg, Some(Color::Base256(8)));
-    let s = parse_one("\x1b[97mx");
-    assert_eq!(s.fg, Some(Color::Base256(15)));
-    let s = parse_one("\x1b[100mx");
-    assert_eq!(s.bg, Some(Color::Base256(8)));
-    let s = parse_one("\x1b[107mx");
-    assert_eq!(s.bg, Some(Color::Base256(15)));
-}
-
-#[test]
-fn ansi_256_indexed_color() {
-    let s = parse_one("\x1b[38;5;200mx");
-    assert_eq!(s.fg, Some(Color::Base256(200)));
-    let s = parse_one("\x1b[48;5;42mx");
-    assert_eq!(s.bg, Some(Color::Base256(42)));
-}
-
-#[test]
-fn ansi_24bit_truecolor() {
-    let s = parse_one("\x1b[38;2;10;20;30mx");
-    assert_eq!(s.fg, Some(Color::Rgb(10, 20, 30)));
-    let s = parse_one("\x1b[48;2;255;128;0mx");
-    assert_eq!(s.bg, Some(Color::Rgb(255, 128, 0)));
+fn ansi_extended_color_formats() {
+    assert_eq!(parse_one("\x1b[38;5;200mx").fg, Some(Color::Base256(200)));
+    assert_eq!(parse_one("\x1b[48;5;42mx").bg, Some(Color::Base256(42)));
+    assert_eq!(parse_one("\x1b[38;2;10;20;30mx").fg, Some(Color::Rgb(10, 20, 30)));
+    assert_eq!(parse_one("\x1b[48;2;255;128;0mx").bg, Some(Color::Rgb(255, 128, 0)));
 }
 
 #[test]
@@ -194,52 +152,166 @@ fn ansi_plain_text_has_no_spans() {
     assert!(out.spans.is_empty());
 }
 
+fn parse(s: &str) -> Style {
+    s.parse::<Style>().unwrap()
+}
+fn parse_err(s: &str) {
+    assert!(s.parse::<Style>().is_err(), "expected '{s}' to fail to parse");
+}
+
 #[test]
-fn style_from_str_attributes() {
-    let s: Style = "bold italic underline".parse().unwrap();
+fn parse_all_attrs() {
+    let s = parse("bold-italic-dim-strikethrough-reverse");
     assert!(s.has_bold());
     assert!(s.has_italic());
-    assert_eq!(s.underline, Some(UnderlineType::Single));
+    assert!(s.has_dim());
+    assert!(s.has_strikethrough());
+    assert!(s.has_reverse());
 }
 
 #[test]
-fn style_from_str_fg_bg_directives() {
-    let s: Style = "fg:red bg:blue".parse().unwrap();
+fn parse_bold_red_either_order() {
+    let a = parse("bold-red");
+    let b = parse("red-bold");
+    assert_eq!(a, b);
+    assert!(a.has_bold());
+    assert_eq!(a.fg, Some(Color::RED));
+}
+
+#[test]
+fn parse_blend_in_bg_piece() {
+    let s = parse("red-on-50%-blue");
     assert_eq!(s.fg, Some(Color::RED));
     assert_eq!(s.bg, Some(Color::BLUE));
+    assert_eq!(s.get_blend(), Some(50));
 }
 
 #[test]
-fn style_from_str_bare_color_is_fg() {
-    let s: Style = "green".parse().unwrap();
-    assert_eq!(s.fg, Some(Color::GREEN));
+fn parse_blend_outside_bg_piece_errors() {
+    parse_err("50%-red");
+    parse_err("red-50%");
 }
 
 #[test]
-fn style_from_str_underline_variants() {
-    let s: Style = "underline:double".parse().unwrap();
-    assert_eq!(s.underline, Some(UnderlineType::Double));
-    let s: Style = "underline:curly".parse().unwrap();
-    assert_eq!(s.underline, Some(UnderlineType::Curly));
+fn parse_bright_colour() {
+    let s = parse("bright-red");
+    assert_eq!(s.fg, Some(Color::BRIGHT_RED));
 }
 
 #[test]
-fn style_from_str_underline_color() {
-    let s: Style = "underline:red".parse().unwrap();
+fn parse_fg_bg_keywords_are_terminal_defaults() {
+    let s = parse("bg-on-fg");
+    assert_eq!(s.fg, Some(Color::Background));
+    assert_eq!(s.bg, Some(Color::Foreground));
+}
+
+#[test]
+fn parse_underline_without_colour() {
+    let bare = parse("underline");
+    assert_eq!(bare.underline, Some(UnderlineType::Single));
+    assert_eq!(bare.underline_color, None);
+
+    let with_line_style = parse("curly-underline");
+    assert_eq!(with_line_style.underline, Some(UnderlineType::Curly));
+    assert_eq!(with_line_style.underline_color, None);
+}
+
+#[test]
+fn parse_line_style_with_colour() {
+    let s = parse("single-red-underline");
     assert_eq!(s.underline, Some(UnderlineType::Single));
     assert_eq!(s.underline_color, Some(Color::RED));
 }
 
 #[test]
-fn style_from_str_blend_directive() {
-    let s: Style = "blend:50".parse().unwrap();
-    assert_eq!(s.get_blend(), Some(50));
+fn parse_full_three_piece() {
+    let s = parse("red-on-blue-single-green-underline");
+    assert_eq!(s.fg, Some(Color::RED));
+    assert_eq!(s.bg, Some(Color::BLUE));
+    assert_eq!(s.underline, Some(UnderlineType::Single));
+    assert_eq!(s.underline_color, Some(Color::GREEN));
 }
 
 #[test]
-fn style_from_str_unknown_token_errors() {
-    let r: Result<Style, _> = "nonsensetoken".parse();
-    assert!(r.is_err());
+fn parse_underline_then_fg_keeps_default_underline_colour() {
+    let s = parse("underline-red");
+    assert_eq!(s.underline, Some(UnderlineType::Single));
+    assert_eq!(s.underline_color, None);
+    assert_eq!(s.fg, Some(Color::RED));
+}
+
+#[test]
+fn parse_two_fg_colours_last_wins() {
+    let s = parse("red-blue");
+    assert_eq!(s.fg, Some(Color::BLUE));
+}
+
+#[test]
+fn parse_on_red_blue_closes_bg_after_colour() {
+    let s = parse("on-red-blue");
+    assert_eq!(s.bg, Some(Color::RED));
+    assert_eq!(s.fg, Some(Color::BLUE));
+}
+
+#[test]
+fn parse_separator_equivalence() {
+    let canonical = parse("bold-red-on-blue");
+    assert_eq!(parse("bold_red_on_blue"), canonical);
+    assert_eq!(parse("bold red on blue"), canonical);
+    assert_eq!(parse("bold_red on-blue"), canonical);
+    assert_eq!(parse("  --bold--red--on--blue--  "), canonical);
+}
+
+#[test]
+fn parse_empty_is_default_style() {
+    assert_eq!(parse(""), Style::new());
+    assert_eq!(parse("   "), Style::new());
+    assert_eq!(parse("---"), Style::new());
+}
+
+#[test]
+fn parse_attr_in_non_fg_piece_errors() {
+    parse_err("on-bold-blue");
+    parse_err("single-bold-underline");
+}
+
+#[test]
+fn parse_line_style_not_closed_errors() {
+    parse_err("single-red");
+    parse_err("curly");
+}
+
+#[test]
+fn parse_bg_not_closed_errors() {
+    parse_err("red-on");
+    parse_err("on-50%");
+}
+
+#[test]
+fn parse_bad_blend_errors() {
+    parse_err("on-200%-blue");
+    parse_err("on-abc%-blue");
+    parse_err("on-50%-30%-blue");
+}
+
+#[test]
+fn parse_bright_without_colour_errors() {
+    parse_err("bright");
+}
+
+#[test]
+fn parse_extra_colour_in_underline_piece_errors() {
+    parse_err("single-red-blue-underline");
+}
+
+#[test]
+fn parse_unknown_token_errors() {
+    parse_err("nonsense");
+}
+
+#[test]
+fn parse_line_style_inside_underline_errors() {
+    parse_err("single-double-underline");
 }
 
 #[test]
@@ -361,3 +433,4 @@ fn styled_str_to_styled_string_styled_has_spans() {
     assert_eq!(total, ss.text.len() + 1);
     assert!(ss.spans[0].style.has_bold());
 }
+

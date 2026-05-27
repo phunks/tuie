@@ -110,6 +110,7 @@ impl std::fmt::Display for ColorParseError {
 
 impl std::error::Error for ColorParseError {}
 
+/// Parses a colour like `red`, `bright-blue`, `#ff8800`, or `42`.
 impl std::str::FromStr for Color {
     type Err = ColorParseError;
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
