@@ -122,8 +122,8 @@ pub enum ParsedEvent {
     Key(Chord),
     /// A decoded mouse event.
     Mouse(MouseInput),
-    /// Terminal resized to `(columns, rows)`.
-    Resize(u16, u16),
+    /// Terminal resized to the given size in cells.
+    Resize(Vec2<u16>),
     /// Focus gained (`true`) or lost (`false`).
     Focus(bool),
     /// A bracketed-paste payload.
@@ -153,6 +153,7 @@ pub use unix::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, size, wri
 mod unix {
     use super::input::Parser;
     use super::ParsedEvent;
+    use crate::prelude::Vec2;
     use std::io::{self, Read, Write};
     use std::os::unix::io::{AsRawFd, RawFd};
     use std::os::unix::net::UnixStream;
@@ -431,7 +432,7 @@ mod unix {
                 }
             }
             let (cols, rows) = size()?;
-            self.parser.push_event(ParsedEvent::Resize(cols, rows));
+            self.parser.push_event(ParsedEvent::Resize(Vec2::new(cols, rows)));
             Ok(())
         }
     }

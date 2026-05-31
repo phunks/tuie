@@ -210,7 +210,7 @@ impl RuntimeEventReader {
         match event {
             E::Key(chord) => Some(self.register_key(chord)),
             E::Mouse(m) => Some(self.mouse_event(m.trigger, m.column, m.row, m.modifiers)),
-            E::Resize(x, y) => Some(RuntimeEvent::Resize(Vec2::new(x, y))),
+            E::Resize(size) => Some(RuntimeEvent::Resize(size)),
             E::Focus(focused) => Some(RuntimeEvent::Focus(focused)),
             E::Paste(s) => Some(RuntimeEvent::Paste(s)),
             E::ColorScheme(scheme) => Some(RuntimeEvent::ColorSchemeChange(scheme)),
