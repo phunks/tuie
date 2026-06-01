@@ -61,7 +61,7 @@ impl<T: TextDocument> EditorState<T> {
                 entry.cursor_after
             };
             self.dirty = true;
-            text.replace_range(pos, pos + deleted_len, &inserted);
+            text.replace_range(pos..pos + deleted_len, &inserted);
             let idx = std::cmp::min(cursor, text.len());
             self.cursor.set_index(text, idx);
             self.anchor = self.cursor.clone();
@@ -125,7 +125,7 @@ impl<T: TextDocument> EditorState<T> {
 
     /// Returns the substring between two cursors.
     pub fn slice_cursors(&self, text: &T, start: &T::Cursor, end: &T::Cursor) -> String {
-        text.slice(start.get_index(), end.get_index())
+        text.slice(start.get_index()..end.get_index())
     }
 
     /// Replaces the range between two cursors with `replacement`.
@@ -134,7 +134,7 @@ impl<T: TextDocument> EditorState<T> {
         end: &T::Cursor,
         replacement: &str,
     ) {
-        self.replace_range(text, start.get_index(), end.get_index(), replacement);
+        self.replace_range(text, start.get_index()..end.get_index(), replacement);
     }
 
     /// Returns the side of a wrap boundary the cursor renders on.
@@ -187,16 +187,16 @@ impl<T: TextDocument> EditorState<T> {
         }
     }
 
-    /// Replaces bytes `start..end` with `replacement`, coalescing into the current undo entry when contiguous.
+    /// Replaces the byte `range` with `replacement`, coalescing into the current undo entry when contiguous.
     pub fn replace_range(
-        &mut self, text: &mut T, start: usize,
-        end: usize,
+        &mut self, text: &mut T, range: std::ops::Range<usize>,
         replacement: &str,
     ) {
+        let std::ops::Range { start, end } = range;
         self.dirty = true;
         self.save_cursor_before_edit();
-        let deleted = text.slice(start, end);
-        text.replace_range(start, end, replacement);
+        let deleted = text.slice(start..end);
+        text.replace_range(start..end, replacement);
         if self.undo_text_dirty {
             let entry = &mut self.undo_stack[self.undo_index];
             let ins_start = entry.pos;
@@ -255,7 +255,7 @@ impl<T: TextDocument> EditorState<T> {
             let deleted = entry.deleted.clone();
             let inserted_len = entry.inserted.len();
             self.dirty = true;
-            text.replace_range(pos, pos + inserted_len, &deleted);
+            text.replace_range(pos..pos + inserted_len, &deleted);
             self.undo_index -= 1;
             let idx = std::cmp::min(cursor, text.len());
             self.cursor.set_index(text, idx);
@@ -277,18 +277,19 @@ impl<T: TextDocument> EditorState<T> {
     /// Deletes the selection and collapses the cursor to the selection start.
     pub fn delete_selection(&mut self, text: &mut T) {
         let (start, end) = self.get_selection();
-        self.replace_range(text, start.get_index(), end.get_index(), "");
+        self.replace_range(text, start.get_index()..end.get_index(), "");
         self.cursor.set_index(text, start.get_index());
         self.anchor = self.cursor.clone();
     }
 
-    /// Deletes the byte range `start..end`.
-    pub fn delete_text(&mut self, text: &mut T, start: usize, end: usize) {
-        self.replace_range(text, start, end, "");
+    /// Deletes the byte `range`.
+    pub fn delete_text(&mut self, text: &mut T, range: std::ops::Range<usize>) {
+        self.replace_range(text, range, "");
     }
 
-    /// Deletes the byte range `start..end`, adjusting for a trailing newline at end of file.
-    pub fn delete_lines(&mut self, text: &mut T, start: usize, end: usize) {
+    /// Deletes the byte `range`, adjusting for a trailing newline at end of file.
+    pub fn delete_lines(&mut self, text: &mut T, range: std::ops::Range<usize>) {
+        let std::ops::Range { start, end } = range;
         let len = text.len();
         let clamped = std::cmp::min(end, len);
         let eat_backward = end > len
@@ -296,22 +297,22 @@ impl<T: TextDocument> EditorState<T> {
             && self.cursor_at_index(text, start - 1).get_char(text) == '\n';
 
         if eat_backward {
-            self.replace_range(text, start - 1, clamped, "");
+            self.replace_range(text, start - 1..clamped, "");
             self.cursor.set_index(text, start - 1);
         } else {
-            self.replace_range(text, start, clamped, "");
+            self.replace_range(text, start..clamped, "");
             self.cursor.set_index(text, start);
         }
         self.anchor = self.cursor.clone();
         self.update(text, Affinity::End);
     }
 
-    /// Replaces the byte range `start..end` with `replacement`, preserving a trailing newline.
+    /// Replaces the byte `range` with `replacement`, preserving a trailing newline.
     pub fn replace_lines(
-        &mut self, text: &mut T, start: usize,
-        end: usize,
+        &mut self, text: &mut T, range: std::ops::Range<usize>,
         replacement: &str,
     ) {
+        let std::ops::Range { start, end } = range;
         let len = text.len();
         let clamped = std::cmp::min(end, len);
         let has_trailing_nl = end <= len
@@ -319,9 +320,9 @@ impl<T: TextDocument> EditorState<T> {
             && self.cursor_at_index(text, clamped - 1).get_char(text) == '\n';
 
         if has_trailing_nl {
-            self.replace_range(text, start, clamped - 1, replacement);
+            self.replace_range(text, start..clamped - 1, replacement);
         } else {
-            self.replace_range(text, start, clamped, replacement);
+            self.replace_range(text, start..clamped, replacement);
         }
         self.cursor.set_index(text, start);
         self.anchor = self.cursor.clone();
@@ -343,7 +344,7 @@ impl<T: TextDocument> EditorState<T> {
     /// Inserts `s`, replacing the selection if any.
     pub fn insert_str(&mut self, text: &mut T, s: &str) {
         let (start, end) = self.get_selection();
-        self.replace_range(text, start.get_index(), end.get_index(), s);
+        self.replace_range(text, start.get_index()..end.get_index(), s);
         self.cursor.set_index(text, start.get_index() + s.len());
         self.anchor = self.cursor.clone();
         self.update(text, Affinity::End);
@@ -359,10 +360,10 @@ impl<T: TextDocument> EditorState<T> {
         }
         let mut after = self.cursor.clone();
         after.move_grapheme(text, Sign::Positive);
-        let left = text.slice(before.get_index(), self.cursor.get_index());
-        let right = text.slice(self.cursor.get_index(), after.get_index());
+        let left = text.slice(before.get_index()..self.cursor.get_index());
+        let right = text.slice(self.cursor.get_index()..after.get_index());
         let swapped = format!("{}{}", right, left);
-        self.replace_range(text, before.get_index(), after.get_index(), &swapped);
+        self.replace_range(text, before.get_index()..after.get_index(), &swapped);
         self.cursor.set_index(text, after.get_index());
         self.anchor = self.cursor.clone();
         self.update(text, Affinity::End);
@@ -374,7 +375,7 @@ impl<T: TextDocument> EditorState<T> {
             let mut target = self.cursor.clone();
             target.move_grapheme(text, direction);
             let (start, end) = direction.order(self.cursor.get_index(), target.get_index());
-            self.delete_text(text, start, end);
+            self.delete_text(text, start..end);
             self.cursor.set_index(text, start);
         } else {
             self.delete_selection(text);
@@ -391,7 +392,7 @@ impl<T: TextDocument> EditorState<T> {
             self.cursor.move_word(text, direction);
             let end = self.cursor.get_index();
             let (start, end) = direction.order(start, end);
-            self.delete_text(text, start, end);
+            self.delete_text(text, start..end);
             self.cursor.set_index(text, start);
         } else {
             self.delete_selection(text);
@@ -653,7 +654,7 @@ impl<T: TextDocument> EditorState<T> {
     /// Returns the selected substring.
     pub fn get_selection_text(&self, text: &T) -> String {
         let (start, end) = self.get_selection();
-        text.slice(start.get_index(), end.get_index())
+        text.slice(start.get_index()..end.get_index())
     }
 
     /// Copies the selection to the clipboard.
@@ -679,7 +680,7 @@ impl<T: TextDocument> EditorState<T> {
         if let Some(content) = tuie::clipboard::read_string() {
             let (start, end) = self.get_selection();
             let start_idx = start.get_index();
-            self.replace_range(text, start_idx, end.get_index(), &content);
+            self.replace_range(text, start_idx..end.get_index(), &content);
             self.cursor.set_index(text, start_idx + content.len());
             self.anchor = self.cursor.clone();
             self.update(text, Affinity::End);
@@ -800,7 +801,7 @@ impl<T: TextDocument> EditorState<T> {
     /// Replaces the entire document content with `s`.
     pub fn replace_all(&mut self, text: &mut T, s: &str) {
         let len = text.len();
-        self.replace_range(text, 0, len, s);
+        self.replace_range(text, 0..len, s);
         let end = text.len();
         self.cursor.set_index(text, end);
         self.anchor = self.cursor.clone();

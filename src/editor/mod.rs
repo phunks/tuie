@@ -82,7 +82,7 @@ impl<T: TextDocument> Editor<T> {
     }
 
     /// Returns the byte range to render as highlighted selection.
-    pub fn get_highlight_range(&self, text: &T) -> (usize, usize) {
+    pub fn get_highlight_range(&self, text: &T) -> std::ops::Range<usize> {
         self.bindings.get_highlight_range(&self.state, text)
     }
 
@@ -154,7 +154,7 @@ impl<T: TextDocument> Editor<T> {
         anchor: usize,
     ) {
         let len = text.len();
-        self.state.replace_range(text, 0, len, s);
+        self.state.replace_range(text, 0..len, s);
         self.state.cursor.set_index(text, cursor);
         self.state.anchor.set_index(text, anchor);
         self.state.update_preferred_col(text);
@@ -164,7 +164,7 @@ impl<T: TextDocument> Editor<T> {
     pub fn set_content(&mut self, text: &mut T, s: &str) {
         self.state.seal_undo_group();
         let len = text.len();
-        self.state.replace_range(text, 0, len, s);
+        self.state.replace_range(text, 0..len, s);
         self.state.cursor.move_document_end(text, Sign::Negative);
         self.state.anchor = self.state.cursor.clone();
         self.state.update_preferred_col(text);
@@ -260,28 +260,27 @@ impl<T: TextDocument> Editor<T> {
         self.state.delete_to_line_end(text, sign);
     }
 
-    /// Deletes the byte range `start..end`, adjusting for a trailing newline at end of file.
-    pub fn delete_lines(&mut self, text: &mut T, start: usize, end: usize) {
-        self.state.delete_lines(text, start, end);
+    /// Deletes the byte `range`, adjusting for a trailing newline at end of file.
+    pub fn delete_lines(&mut self, text: &mut T, range: std::ops::Range<usize>) {
+        self.state.delete_lines(text, range);
     }
 
-    /// Replaces the byte range `start..end` with `replacement`, preserving a trailing newline.
+    /// Replaces the byte `range` with `replacement`, preserving a trailing newline.
     pub fn replace_lines(
-        &mut self, text: &mut T, start: usize,
-        end: usize,
+        &mut self, text: &mut T, range: std::ops::Range<usize>,
         replacement: &str,
     ) {
-        self.state.replace_lines(text, start, end, replacement);
+        self.state.replace_lines(text, range, replacement);
     }
 
-    /// Deletes the byte range `start..end`.
-    pub fn delete_text(&mut self, text: &mut T, start: usize, end: usize) {
-        self.state.delete_text(text, start, end);
+    /// Deletes the byte `range`.
+    pub fn delete_text(&mut self, text: &mut T, range: std::ops::Range<usize>) {
+        self.state.delete_text(text, range);
     }
 
-    /// Replaces the byte range `start..end` with `s`.
-    pub fn replace_range(&mut self, text: &mut T, start: usize, end: usize, s: &str) {
-        self.state.replace_range(text, start, end, s);
+    /// Replaces the byte `range` with `s`.
+    pub fn replace_range(&mut self, text: &mut T, range: std::ops::Range<usize>, s: &str) {
+        self.state.replace_range(text, range, s);
     }
 
     /// Expands both ends of the selection to whole-line boundaries.

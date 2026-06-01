@@ -54,10 +54,10 @@ impl Input {
 
     fn update_highlight(&mut self) {
         self.text.clear_highlight();
-        let (start, end) = self.editor.get_highlight_range(&*self.text);
-        if start != end {
+        let range = self.editor.get_highlight_range(&*self.text);
+        if !range.is_empty() {
             let style = self.selected_style.unwrap_or_else(|| config::get().highlight_style);
-            self.text.highlight(start, end, style);
+            self.text.highlight(range, style);
         }
     }
 

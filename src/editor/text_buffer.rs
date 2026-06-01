@@ -9,17 +9,16 @@ pub trait TextBuffer {
     fn len(&self) -> usize;
     /// Returns whether `pos` is a `char` boundary.
     fn is_char_boundary(&self, pos: usize) -> bool;
-    /// Returns the substring `start..end` as a new [`String`].
-    fn slice(&self, start: usize, end: usize) -> String;
+    /// Returns the substring `range` as a new [`String`].
+    fn slice(&self, range: std::ops::Range<usize>) -> String;
 
-    /// Replaces bytes `[start..end)` with `replacement`.
-    fn replace_range(&mut self, start: usize, end: usize, replacement: &str);
+    /// Replaces the byte `range` with `replacement`.
+    fn replace_range(&mut self, range: std::ops::Range<usize>, replacement: &str);
 
-    /// Iterates contiguous chunks covering `start..end`.
+    /// Iterates contiguous chunks covering `range`.
     fn chunks(
         &self,
-        start: usize,
-        end: usize,
+        range: std::ops::Range<usize>,
     ) -> Box<dyn Iterator<Item = &str> + '_>;
 
     /// Returns the logical line/column position of `index`, ignoring soft-wrap.
@@ -264,7 +263,7 @@ pub trait CursorMethods: Cursor {
     }
 
     /// Returns the byte range of the word under the cursor.
-    fn get_word_under_cursor(&self, text: &Self::Text) -> Option<(usize, usize)> {
+    fn get_word_under_cursor(&self, text: &Self::Text) -> Option<std::ops::Range<usize>> {
         let mut cursor = self.clone();
         let ch = cursor.get_char(text);
         if ch == '\0' {
@@ -292,7 +291,7 @@ pub trait CursorMethods: Cursor {
             }
             cursor.next_char(text);
         }
-        Some((start, cursor.get_index()))
+        Some(start..cursor.get_index())
     }
 }
 

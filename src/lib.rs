@@ -112,7 +112,6 @@ pub mod prelude {
     pub use super::runtime::event::RuntimeEvent;
     pub use super::widget::events::ChangeEvent;
     pub use super::widget::events::ClickEvent;
-    pub use super::widget::events::ListRequestEvent;
     pub use super::widget::events::ScrollEvent;
     #[cfg(feature = "images")]
     pub use super::render::image::{ImageConfig, ImageProtocol, ImageSource, ImageSourceError};
@@ -123,6 +122,7 @@ pub mod prelude {
     pub use super::widget::Layer;
     pub use super::widget::widgets::grid::{Cell, CellMut, Grid, Track};
     pub use super::widget::widgets::list::List;
+    pub use super::widget::widgets::list::ListRequestEvent;
     pub use super::widget::widgets::pane::Pane;
     pub use super::widget::widgets::stack::Stack;
     pub use super::widget::widgets::split::Split;

@@ -445,7 +445,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
         let clamped_end =
             std::cmp::min(state.anchor.get_index(), text.len());
         let clipboard_text = normalize_line_paste(
-            &text.slice(state.cursor.get_index(), clamped_end),
+            &text.slice(state.cursor.get_index()..clamped_end),
         );
         tuie::clipboard::write(ClipboardItem::Text(clipboard_text));
         let from = state.cursor.clone();
@@ -456,12 +456,12 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                 state.update_preferred_col(text);
             }
             ViOperator::Delete => {
-                state.delete_lines(text, from.get_index(), to.get_index());
+                state.delete_lines(text, from.get_index()..to.get_index());
                 self.clamp_cursor_to_line_end(state, text);
                 state.update_preferred_col(text);
             }
             ViOperator::Change => {
-                state.replace_lines(text, from.get_index(), to.get_index(), "");
+                state.replace_lines(text, from.get_index()..to.get_index(), "");
                 state.update_preferred_col(text);
                 self.set_mode(state, ViMode::Insert);
             }
@@ -487,7 +487,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                     } else {
                         paste_text
                     };
-                    state.replace_range(text, next_line_start, next_line_start, &insertion);
+                    state.replace_range(text, next_line_start..next_line_start, &insertion);
                     let offset = if at_eof {
                         1
                     } else {
@@ -498,7 +498,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                 Sign::Negative => {
                     let mut probe = state.cursor.clone();
                     let line_start = probe.line_start(text).get_index();
-                    state.replace_range(text, line_start, line_start, &paste_text);
+                    state.replace_range(text, line_start..line_start, &paste_text);
                     state.cursor.set_index(text, line_start);
                 }
             }
@@ -511,7 +511,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                 }
                 Sign::Negative => state.cursor.get_index(),
             };
-            state.replace_range(text, start, start, content);
+            state.replace_range(text, start..start, content);
             state.cursor.set_index(text, start + content.len());
             state.cursor.prev_grapheme(text);
         }
@@ -1647,7 +1647,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
             }
 
             if seg_has_content {
-                for chunk in text.chunks(seg_start, trim_end.get_index())
+                for chunk in text.chunks(seg_start..trim_end.get_index())
                 {
                     result.push_str(&chunk);
                 }
@@ -1664,7 +1664,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
             seg_cursor = nl;
         }
 
-        state.replace_range(text, from, end, &result);
+        state.replace_range(text, from..end, &result);
         state.cursor =
             state.cursor_at_index(text, join_pos.unwrap_or(from));
         state.anchor = state.cursor.clone();
@@ -1680,7 +1680,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
         }
         let next = c.get_index();
         drop(c);
-        let grapheme = text.slice(state.cursor.get_index(), next);
+        let grapheme = text.slice(state.cursor.get_index()..next);
         let mut toggled = String::with_capacity(grapheme.len());
         for c in grapheme.chars() {
             if c.is_uppercase() {
@@ -1690,7 +1690,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
             }
         }
         state
-            .replace_range(text, state.cursor.get_index(), next, &toggled);
+            .replace_range(text, state.cursor.get_index()..next, &toggled);
         state.cursor.seek_chars(text, toggled.chars().count() as i64);
         state.anchor = state.cursor.clone();
         state.update_preferred_col(text);
@@ -1908,8 +1908,8 @@ impl<T: TextDocument + 'static> ViBindings<T> {
     }
 
     fn motion_word_search(&mut self, state: &mut EditorState<T>, text: &mut T, count: usize, sign: Sign) {
-        if let Some((start, end)) = state.cursor.get_word_under_cursor(text) {
-            let word = text.slice(start, end);
+        if let Some(range) = state.cursor.get_word_under_cursor(text) {
+            let word = text.slice(range);
             for _ in 0..count {
                 if !find_word_occurrence(&mut state.cursor, text, &word, sign) {
                     break;
@@ -3337,7 +3337,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
             c
         };
         if start < c {
-            state.delete_text(text, start, c);
+            state.delete_text(text, start..c);
             state.cursor.set_index(text, start);
             state.anchor = state.cursor.clone();
             state.update_preferred_col(text);
@@ -3372,8 +3372,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                     let replacement =
                         if grapheme == "\0" { "" } else { &grapheme };
                     state.replace_range(text,
-                        state.cursor.get_index(),
-                        end,
+                        state.cursor.get_index()..end,
                         replacement,
                     );
                     state.anchor = state.cursor.clone();
@@ -3391,12 +3390,11 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                     state.insert_char(text, *c);
                 } else {
                     self.replace_stack.push_str(
-                        &text.slice(state.cursor.get_index(), next),
+                        &text.slice(state.cursor.get_index()..next),
                     );
                     let ch = c.to_string();
                     state.replace_range(text,
-                        state.cursor.get_index(),
-                        next,
+                        state.cursor.get_index()..next,
                         &ch,
                     );
                     state.cursor.next_char(text);
@@ -3581,7 +3579,7 @@ impl<T: TextDocument + 'static> InputBindings<T> for ViBindings<T> {
         state.cursor.get_index()
     }
 
-    fn get_highlight_range(&self, state: &EditorState<T>, text: &T) -> (usize, usize) {
+    fn get_highlight_range(&self, state: &EditorState<T>, text: &T) -> std::ops::Range<usize> {
         match self.mode {
             ViMode::VisualLine => {
                 let (lo, hi) = state.get_selection();
@@ -3590,16 +3588,16 @@ impl<T: TextDocument + 'static> InputBindings<T> for ViBindings<T> {
                 start.line_start(text);
                 end.linewise_end(text);
                 let end_idx = std::cmp::min(end.get_index(), text.len() + 1);
-                (start.get_index(), end_idx)
+                start.get_index()..end_idx
             }
             ViMode::Visual => {
                 let (start, mut end) = state.get_selection();
                 end.next_grapheme(text);
-                (start.get_index(), end.get_index())
+                start.get_index()..end.get_index()
             }
             _ => {
                 let (start, end) = state.get_selection();
-                (start.get_index(), end.get_index())
+                start.get_index()..end.get_index()
             }
         }
     }

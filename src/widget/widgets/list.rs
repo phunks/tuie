@@ -8,6 +8,9 @@ use crate::widget::scrollbar::{corner_extension, progress_from_subcell, scrollba
 use chord_macro::chord;
 use sign::Directional;
 
+/// Request from a [`List`] for the given index range to be loaded.
+pub struct ListRequestEvent(pub std::ops::Range<usize>);
+
 #[derive(Clone, Copy, Debug)]
 struct Anchor {
     index: usize,

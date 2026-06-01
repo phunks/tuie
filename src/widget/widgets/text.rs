@@ -81,12 +81,7 @@ impl<'a> Iterator for TabIterator<'a> {
 }
 
 /// Click event reporting the byte range of the clicked grapheme.
-pub struct TextClickEvent {
-    /// Start byte index of the clicked grapheme in the underlying text.
-    pub start_index: usize,
-    /// End byte index of the clicked grapheme in the underlying text.
-    pub end_index: usize,
-}
+pub struct TextClickEvent(pub std::ops::Range<usize>);
 
 /// Styled text widget with configurable overflow, alignment, and tab expansion.
 pub struct Text {
@@ -308,21 +303,20 @@ impl TextBuffer for Text {
         self.content.as_str().is_char_boundary(pos)
     }
 
-    fn slice(&self, start: usize, end: usize) -> String {
-        self.content.as_str()[start..end].to_string()
+    fn slice(&self, range: std::ops::Range<usize>) -> String {
+        self.content.as_str()[range].to_string()
     }
 
-    fn replace_range(&mut self, start: usize, end: usize, replacement: &str) {
-        self.content.replace_range(start..end, replacement);
+    fn replace_range(&mut self, range: std::ops::Range<usize>, replacement: &str) {
+        self.content.replace_range(range, replacement);
         self.dirty_layout();
     }
 
     fn chunks(
         &self,
-        start: usize,
-        end: usize,
+        range: std::ops::Range<usize>,
     ) -> Box<dyn Iterator<Item = &str> + '_> {
-        Box::new(std::iter::once(&self.content.as_str()[start..end]))
+        Box::new(std::iter::once(&self.content.as_str()[range]))
     }
 
     fn index_to_physical_pos(&self, index: usize) -> Vec2<usize> {
@@ -577,10 +571,10 @@ impl Text {
         self.overflow(TextOverflow::TRUNCATE)
     }
 
-    /// Applies `style` to the byte range `start..end`.
-    pub fn highlight(&mut self, start: usize, end: usize, style: Style) {
+    /// Applies `style` to the byte `range`.
+    pub fn highlight(&mut self, range: std::ops::Range<usize>, style: Style) {
         self.dirty_paint();
-        self.content.style_range(start..end, |s| *s = style);
+        self.content.style_range(range, |s| *s = style);
     }
 
     /// Clears all style spans, leaving the text unstyled.

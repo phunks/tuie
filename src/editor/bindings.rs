@@ -58,9 +58,9 @@ pub trait InputBindings<T: TextDocument> {
         }
     }
     /// Returns the byte range to highlight as the selection.
-    fn get_highlight_range(&self, state: &EditorState<T>, _text: &T) -> (usize, usize) {
+    fn get_highlight_range(&self, state: &EditorState<T>, _text: &T) -> std::ops::Range<usize> {
         let (start, end) = state.get_selection();
-        (start.get_index(), end.get_index())
+        start.get_index()..end.get_index()
     }
 }
 
