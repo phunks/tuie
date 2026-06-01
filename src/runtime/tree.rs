@@ -19,12 +19,10 @@ pub(crate) fn rect_center(r: Rect<i32, u16>) -> Vec2<i32> {
 }
 
 pub(crate) fn cell_px() -> Vec2<i32> {
-    if let Some(info) = crate::runtime::get_terminal_info() {
-        if let Some(px) = info.cell_px {
-            return Vec2::new(px.x as i32, px.y as i32);
-        }
+    match crate::runtime::get_terminal_info().cell_size {
+        Some(px) => Vec2::new(px.x as i32, px.y as i32),
+        None => Vec2::of(1i32),
     }
-    Vec2::of(1i32)
 }
 
 pub(crate) fn hit_test_z(

@@ -22,7 +22,7 @@ pub(crate) fn on_input_shared<T: TextDocument>(
         chord!(LeftClick) if click == 2 => state.double_click(text, event.cell()),
         chord!(LeftClick) if click == 3 => state.triple_click(text, event.cell()),
         chord!(LeftDrag) if click == 1 => {
-            if !state.inclusive_selection && crate::get_terminal_info().map(|i| i.mouse_pixel_capture).unwrap_or(false) {
+            if !state.inclusive_selection && crate::get_terminal_info().subcell_events {
                 state.drag_ibeam(text, ibeam_click_pos(event));
             } else {
                 state.drag(text, event.cell());

@@ -1036,7 +1036,7 @@ impl Widget for List {
         if has_subcell {
             #[cfg(feature = "gui")]
             {
-                let cell_px = crate::runtime::get_terminal_info().and_then(|i| i.cell_px).unwrap_or(Vec2::of(1));
+                let cell_px = crate::runtime::get_terminal_info().cell_size.unwrap_or(Vec2::of(1));
                 let subcell = Axis2D::map(|axis| -((fract[axis] * cell_px[axis] as f32).round() as i32));
                 let mut content_size = viewport;
                 let mut content_offset = Vec2::of(0i32);

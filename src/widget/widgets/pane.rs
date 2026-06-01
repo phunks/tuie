@@ -1116,7 +1116,7 @@ impl Widget for Pane {
         if has_subcell {
             #[cfg(feature = "gui")]
             {
-                let cell_px = crate::runtime::get_terminal_info().and_then(|i| i.cell_px).unwrap_or(Vec2::of(1));
+                let cell_px = crate::runtime::get_terminal_info().cell_size.unwrap_or(Vec2::of(1));
                 let subcell = Axis2D::map(|a| -((fract[a] * cell_px[a] as f32).round() as i32));
                 let a = self.orientation;
                 let cross = a.flip();

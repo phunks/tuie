@@ -220,7 +220,7 @@ fn placement_for(
 
 fn is_tmux() -> bool {
     crate::runtime::get_terminal_info()
-        .and_then(|i| i.xtversion)
+        .xtversion
         .is_some_and(|v| v.starts_with("tmux "))
 }
 
@@ -313,7 +313,7 @@ fn cover_placement(
 ) -> (Vec2<u16>, Vec2<u16>) {
     let widget_clamped = Vec2::new(widget.x.min(max_cells), widget.y.min(max_cells));
     let src_px = source.get_pixel_dims();
-    let Some(cell_px) = crate::runtime::get_terminal_info().and_then(|i| i.cell_px) else {
+    let Some(cell_px) = crate::runtime::get_terminal_info().cell_size else {
         return (widget_clamped, Vec2::of(0u16));
     };
     if src_px.x == 0

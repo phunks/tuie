@@ -139,13 +139,25 @@ pub struct TerminalInfo {
     /// The terminal size in cells.
     pub size: Vec2<u16>,
     /// The pixel size of a single cell, when reported by the terminal.
-    pub cell_px: Option<Vec2<u16>>,
-    /// Whether pixel-precision mouse reporting is enabled.
-    pub mouse_pixel_capture: bool,
+    pub cell_size: Option<Vec2<u16>>,
+    /// Whether [`InputEvent::pos`](crate::widget::input::InputEvent::pos) carries real sub-cell precision.
+    pub subcell_events: bool,
     /// The detected color scheme, when reported by the terminal.
     pub color_scheme: Option<ColorScheme>,
     /// The raw `XTVERSION` response, if the terminal replied.
     pub xtversion: Option<String>,
+}
+
+impl Default for TerminalInfo {
+    fn default() -> Self {
+        Self {
+            size: Vec2::of(0u16),
+            cell_size: None,
+            subcell_events: false,
+            color_scheme: None,
+            xtversion: None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default)]
@@ -361,9 +373,10 @@ pub fn is_gui() -> bool {
     with_ctx(|c| c.mode == Mode::Gui)
 }
 
-/// Returns the current [`TerminalInfo`], or `None` before the startup query completes.
-pub fn get_terminal_info() -> Option<TerminalInfo> {
-    with_ctx(|ctx| ctx.terminal_info.clone())
+/// Returns the current [`TerminalInfo`]. Before startup completes, returns the [`Default`]
+/// (`size: 0`, `cell_size: None`, etc.) rather than panicking.
+pub fn get_terminal_info() -> TerminalInfo {
+    with_ctx(|ctx| ctx.terminal_info.clone().unwrap_or_default())
 }
 
 #[cfg(feature = "images")]
@@ -371,19 +384,7 @@ pub(crate) fn get_image_caps() -> ImageCaps {
     with_ctx(|ctx| ctx.image_caps)
 }
 
-/// Returns the pixel size of one cell along `axis`, at least 1.
-pub(crate) fn cell_px_along(axis: Axis2D) -> u16 {
-    if !is_gui() {
-        return 1;
-    }
-    get_terminal_info()
-        .and_then(|i| i.cell_px)
-        .map(|c| c[axis])
-        .unwrap_or(1)
-        .max(1)
-}
-
-fn update_terminal_info(f: impl FnOnce(&mut TerminalInfo)) {
+pub(crate) fn update_terminal_info(f: impl FnOnce(&mut TerminalInfo)) {
     with_ctx_mut(|ctx| {
         if let Some(info) = ctx.terminal_info.as_mut() {
             f(info);
@@ -397,7 +398,7 @@ pub(crate) fn sync_gui_grid_size(cells: Vec2<u16>, cell_px: Vec2<u16>) {
         ctx.pending_cell_px = Some(cell_px);
         if let Some(info) = ctx.terminal_info.as_mut() {
             info.size = cells;
-            info.cell_px = Some(cell_px);
+            info.cell_size = Some(cell_px);
         }
     });
 }
@@ -918,7 +919,7 @@ pub(crate) fn update(
                     if let Some(info) = ctx.terminal_info.as_mut() {
                         info.size = *size;
                         if let Some(new_physical) = cell_px {
-                            info.cell_px = Some(new_physical);
+                            info.cell_size = Some(new_physical);
                         }
                     }
                 });
@@ -1081,13 +1082,7 @@ pub fn init_emulator(size: Vec2<u16>) {
     });
     set_output(std::io::sink());
     with_ctx_mut(|ctx| {
-        ctx.terminal_info = Some(TerminalInfo {
-            size,
-            cell_px: None,
-            mouse_pixel_capture: false,
-            color_scheme: None,
-            xtversion: None,
-        });
+        ctx.terminal_info = Some(TerminalInfo { size, ..Default::default() });
         ctx.image_caps = ImageCaps::default();
     });
 }
@@ -1336,10 +1331,9 @@ impl Runtime {
             ctx.pending_cell_px = Some(cell_px);
             ctx.terminal_info = Some(TerminalInfo {
                 size: cell_size,
-                cell_px: Some(cell_px),
-                mouse_pixel_capture: false,
-                color_scheme: None,
-                xtversion: None,
+                cell_size: Some(cell_px),
+                subcell_events: true,
+                ..Default::default()
             });
             ctx.image_caps = ImageCaps::default();
         });
@@ -1368,10 +1362,8 @@ impl Runtime {
                 let physical = physical_cell_px();
                 let mut info = TerminalInfo {
                     size: initial_size,
-                    cell_px: physical,
-                    mouse_pixel_capture: false,
-                    color_scheme: None,
-                    xtversion: None,
+                    cell_size: physical,
+                    ..Default::default()
                 };
                 let mut caps = ImageCaps::default();
 
@@ -1382,11 +1374,11 @@ impl Runtime {
                         caps.supports_kitty_shm = kitty_reply == Some(true);
                         caps.supports_sixel = results.get(&sixel_h).unwrap_or(false);
                         if let Some(px) = results.get(&cell_px_h).unwrap_or(None) {
-                            info.cell_px = Some(Vec2::new(px.width, px.height));
+                            info.cell_size = Some(Vec2::new(px.width, px.height));
                         }
                         if let (Some(win), Some(cell)) = (
                             results.get(&win_px_h).unwrap_or(None),
-                            info.cell_px,
+                            info.cell_size,
                         ) {
                             let round_div = |num: u32, den: u32| {
                                 let den = den.max(1);
@@ -1403,7 +1395,7 @@ impl Runtime {
                                 ),
                             ));
                         }
-                        info.mouse_pixel_capture =
+                        info.subcell_events =
                             results.get(&mouse_px_h).unwrap_or(None).unwrap_or(false)
                                 && self.mouse_pixel_dpr.is_some();
                         if let Some(ver) = results.get(&xtver).unwrap_or(None) {
@@ -1428,7 +1420,7 @@ impl Runtime {
                 crate::render::image::shm::unlink_probe();
 
                 with_ctx_mut(|ctx| {
-                    ctx.pending_cell_px = info.cell_px;
+                    ctx.pending_cell_px = info.cell_size;
                     ctx.terminal_info = Some(info);
                     ctx.image_caps = caps;
                 });
@@ -1459,7 +1451,7 @@ impl Runtime {
         let pixel_mouse = with_ctx(|ctx| {
             ctx.terminal_info
                 .as_ref()
-                .map(|i| i.mouse_pixel_capture)
+                .map(|i| i.subcell_events)
                 .unwrap_or(false)
         });
         if pixel_mouse {
@@ -1516,7 +1508,7 @@ impl Runtime {
         output::leave_alternate_screen(&mut self.buf);
         output::pop_keyboard_enhancement_flags(&mut self.buf);
         let pixel_mouse = RUNTIME_CTX
-            .try_with(|ctx| ctx.borrow().terminal_info.as_ref().map(|i| i.mouse_pixel_capture).unwrap_or(false))
+            .try_with(|ctx| ctx.borrow().terminal_info.as_ref().map(|i| i.subcell_events).unwrap_or(false))
             .unwrap_or(false);
         if pixel_mouse {
             output::disable_mouse_pixel_capture(&mut self.buf);
@@ -1808,7 +1800,7 @@ impl Runtime {
     }
 
     fn focus_first_widget(&mut self, root: &mut dyn Widget) {
-        let terminal_size = get_terminal_info().map(|i| i.size).unwrap_or(Vec2::of(0));
+        let terminal_size = get_terminal_info().size;
         let clip = Axis2D::map(|a| (0, terminal_size[a] as i32));
 
         let mut id = {
@@ -2430,7 +2422,7 @@ impl Runtime {
     }
 
     fn layout_and_render(&mut self, root: &mut dyn Widget) -> std::io::Result<FrameRender> {
-        let terminal_size = get_terminal_info().map(|i| i.size).unwrap_or(Vec2::of(0));
+        let terminal_size = get_terminal_info().size;
         if terminal_size != root.get_rect_size() {
             dirty_layout();
         }
@@ -2589,7 +2581,7 @@ impl Runtime {
         })
         .unwrap_or((Vec2::of(0i32), Vec2::of(0u32)));
         self.renderer.set_root_screen_pos_px(grid_origin_px);
-        if let Some(cell_px) = get_terminal_info().and_then(|i| i.cell_px) {
+        if let Some(cell_px) = get_terminal_info().cell_size {
             let size = self.renderer.gui_size();
             let grid_size_px = Vec2::new(
                 size.x as u32 * cell_px.x as u32,
@@ -2633,7 +2625,7 @@ impl Runtime {
         output::end_synchronized_update(&mut self.buf);
 
         let mut cursor_visible = false;
-        let term_size = get_terminal_info().map(|i| i.size).unwrap_or(Vec2::of(0u16));
+        let term_size = get_terminal_info().size;
         let in_grid = |pos: Vec2<i32>| {
             pos.x >= 0
                 && pos.y >= 0

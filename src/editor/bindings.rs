@@ -6,7 +6,7 @@ use std::any::Any;
 
 pub(crate) fn ibeam_click_pos(event: &InputEvent) -> Vec2<i32> {
     let mut cell = event.cell();
-    if crate::get_terminal_info().map(|i| i.mouse_pixel_capture).unwrap_or(false) && event.pos.x.fract() > 0.5 {
+    if crate::get_terminal_info().subcell_events && event.pos.x.fract() > 0.5 {
         cell.x += 1;
     }
     cell

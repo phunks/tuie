@@ -363,7 +363,7 @@ impl ScrollbarState {
         #[cfg(feature = "gui")]
         if crate::runtime::is_gui() {
             if let Some(cell_px) = crate::runtime::get_terminal_info()
-                .and_then(|i| i.cell_px)
+                .cell_size
                 .map(|c| c[axis])
                 .filter(|&v| v > 1)
             {

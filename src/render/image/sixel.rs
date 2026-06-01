@@ -32,7 +32,7 @@ fn layout(
     source_px: Vec2<u32>,
     fill: bool,
 ) -> Option<SixelLayout> {
-    let cell_px = crate::runtime::get_terminal_info()?.cell_px?;
+    let cell_px = crate::runtime::get_terminal_info().cell_size?;
     if placement_size.x == 0 || placement_size.y == 0 || cell_px.x == 0 || cell_px.y == 0 {
         return None;
     }
