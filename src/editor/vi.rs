@@ -3132,7 +3132,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
 
         state.seal_undo_group();
 
-        let click = event.get_click_cycle(3);
+        let click = event.click_cycle(3);
         let action_taken = match &event.chord {
             chord!(Esc) => { self.exit_visual_to_normal(state, text); true }
             chord!(v) => { self.visual_action_toggle_visual(state, text, linewise); true }
@@ -3235,7 +3235,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
     }
 
     fn handle_normal_mouse(&mut self, state: &mut EditorState<T>, text: &mut T, event: &InputEvent) -> bool {
-        let click = event.get_click_cycle(3);
+        let click = event.click_cycle(3);
         match &event.chord {
             chord!(LeftClick) if click == 1 => state.click(text, event.cell()),
             chord!(LeftClick) if click == 2 => state.double_click(text, event.cell()),

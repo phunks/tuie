@@ -9,7 +9,7 @@ pub(crate) fn on_input_shared<T: TextDocument>(
     text: &mut T,
     event: &InputEvent,
 ) -> bool {
-    let click = event.get_click_cycle(3);
+    let click = event.click_cycle(3);
     match &event.chord {
         chord!(LeftClick) if click == 1 => {
             let pos = if state.inclusive_selection {

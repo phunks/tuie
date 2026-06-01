@@ -35,13 +35,13 @@ impl InputEvent {
     }
 
     /// Returns `count` mapped onto the cycle `1..=max`, repeating after `max` clicks.
-    pub fn get_click_cycle(&self, max: u8) -> u8 {
+    pub fn click_cycle(&self, max: u8) -> u8 {
         1 + (self.count.saturating_sub(1)) % max
     }
 
-    /// Returns true when [`get_click_cycle`](Self::get_click_cycle) lands on `n`.
+    /// Returns true when [`click_cycle`](Self::click_cycle) lands on `n`.
     pub fn is_cycle(&self, n: u8, max: u8) -> bool {
-        self.get_click_cycle(max) == n
+        self.click_cycle(max) == n
     }
 
     /// Returns true when the [`Chord`] is any mouse trigger.
