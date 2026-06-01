@@ -928,7 +928,7 @@ impl Pane {
 
     fn render_children(&self, child_ctx: &mut crate::render::RenderContext) {
         let a = self.orientation;
-        let physical_start = child_ctx.position[a] as i32;
+        let physical_start = child_ctx.pos[a] as i32;
         let physical_end = physical_start + child_ctx.physical_size[a] as i32;
         let anchor = child_ctx.anchor;
         let monotonic = !self.is_wrapping();

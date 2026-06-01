@@ -593,7 +593,7 @@ impl CellWriter<'_> {
 
 pub(crate) struct CtxSnapshot {
     pub anchor: Vec2<i32>,
-    pub position: Vec2<u16>,
+    pub pos: Vec2<u16>,
     pub physical_size: Vec2<u16>,
     pub size: Vec2<u16>,
     pub viewport_pos: Vec2<u16>,
@@ -626,10 +626,10 @@ pub(crate) struct QueuedEntry {
     pub seq: u64,
     pub parent_screen_pos_px: Vec2<i32>,
     /// Viewport offset from parent's grid origin at queue time, in cells.
-    /// Only stored for `Kind::Offset` entries — `parent_grid_origin_cells` is
+    /// Only stored for `Kind::Offset` entries. `parent_grid_origin_cells` is
     /// repurposed (set to 0) for those, so the queue-time origin isn't
     /// otherwise recoverable. Z/Layer/Popup entries derive this at read time
-    /// from `snapshot.position - parent_grid_origin_cells`.
+    /// from `snapshot.pos - parent_grid_origin_cells`.
     #[cfg(feature = "gui")]
     pub cell_pos_in_parent: Vec2<i32>,
     pub parent_grid_origin_cells: Vec2<i32>,
@@ -955,7 +955,7 @@ impl GridRenderer {
                 raw_writer: &mut *raw_writer,
                 anchor: entry.snapshot.anchor,
                 cursor: Vec2::of(0i32),
-                position: entry.snapshot.position,
+                pos: entry.snapshot.pos,
                 physical_size: entry.snapshot.physical_size,
                 size: entry.snapshot.size,
                 viewport_pos: entry.snapshot.viewport_pos,
@@ -988,7 +988,7 @@ impl GridRenderer {
             cursor: Vec2::of(0i32),
             base: base_style,
             style: base_style,
-            position: Vec2::of(0u16),
+            pos: Vec2::of(0u16),
             anchor: Vec2::of(0i32),
         }
     }
@@ -1063,7 +1063,7 @@ impl GridRenderer {
             }
         }
 
-        let snap_pos = entry.snapshot.position;
+        let snap_pos = entry.snapshot.pos;
         let snap_pos_i = Vec2::new(snap_pos.x as i32, snap_pos.y as i32);
         let prev_active_seq = self.state.active_seq.replace(entry.seq);
         let prev_drain = self.state.drain_ctx;
@@ -1082,7 +1082,7 @@ impl GridRenderer {
             raw_writer: &mut *raw_writer,
             anchor,
             cursor: Vec2::of(0i32),
-            position: snap_pos,
+            pos: snap_pos,
             physical_size: entry.snapshot.physical_size,
             size: entry.snapshot.size,
             viewport_pos: snap_pos,
@@ -1197,7 +1197,7 @@ pub struct RenderContext<'a> {
     /// The cursor offset within this region in local coordinates.
     pub cursor: Vec2<i32>,
     /// The screen-space top-left of the visible clip rect.
-    pub position: Vec2<u16>,
+    pub pos: Vec2<u16>,
     /// The visible clip size in cells.
     pub physical_size: Vec2<u16>,
     /// The virtual region size in cells.
@@ -1247,7 +1247,7 @@ impl<'a> RenderContext<'a> {
         self.move_to(pos);
         let render_size = child.get_rect_size();
         let child_style = child.get_style();
-        let parent_pos = self.position;
+        let parent_pos = self.pos;
         let parent_phys = self.physical_size;
         let mut region = self.region(render_size);
         region.apply_child_style(child_style);
@@ -1273,7 +1273,7 @@ impl<'a> RenderContext<'a> {
         });
         let snapshot = CtxSnapshot {
             anchor: region.anchor,
-            position: snap_pos,
+            pos: snap_pos,
             physical_size: snap_size,
             size: region.size,
             viewport_pos: region.viewport_pos,
@@ -1366,7 +1366,7 @@ impl<'a> RenderContext<'a> {
         if blend == 0 {
             return;
         }
-        let position = self.position.map(|n| n as i32);
+        let position = self.pos.map(|n| n as i32);
         let y_start = std::cmp::max(position.y, 0) as usize;
         let y_end = std::cmp::min(
             position.y + self.physical_size.y as i32,
@@ -1374,7 +1374,7 @@ impl<'a> RenderContext<'a> {
         ) as usize;
         if blend >= 100 {
             let saved_cursor = self.cursor;
-            let local_x = self.position.x as i32 - self.anchor.x;
+            let local_x = self.pos.x as i32 - self.anchor.x;
             let style = self.style;
             for y_screen in y_start..y_end {
                 let local_y = y_screen as i32 - self.anchor.y;
@@ -1419,14 +1419,14 @@ impl<'a> RenderContext<'a> {
 
     /// Fills every cell in this region with `glyph` using the active style.
     pub fn fill(&mut self, glyph: &str) {
-        let position = self.position.map(|n| n as i32);
+        let position = self.pos.map(|n| n as i32);
         let y_start = std::cmp::max(position.y, 0);
         let y_end = std::cmp::min(
             position.y + self.physical_size.y as i32,
             self.state.cells_height as i32,
         );
         let saved_cursor = self.cursor;
-        let local_x = self.position.x as i32 - self.anchor.x;
+        let local_x = self.pos.x as i32 - self.anchor.x;
         let style = self.style;
         for y_screen in y_start..y_end {
             let local_y = y_screen - self.anchor.y;
@@ -1446,7 +1446,7 @@ impl<'a> RenderContext<'a> {
             return;
         }
         let position = self.anchor + self.cursor;
-        if position.x + self.size.x as i32 <= self.position.x as i32 {
+        if position.x + self.size.x as i32 <= self.pos.x as i32 {
             return;
         }
 
@@ -1494,7 +1494,7 @@ impl<'a> RenderContext<'a> {
     /// Returns a [`RowWriter`] for the visible cells in the current row.
     pub fn row_writer(&mut self) -> RowWriter<'_> {
         let position = self.anchor + self.cursor;
-        let (clip_pos, clip_size) = (self.position, self.physical_size);
+        let (clip_pos, clip_size) = (self.pos, self.physical_size);
         let clip_x_start = clip_pos.x as i32;
         let clip_x_end = (clip_pos.x + clip_size.x) as i32;
         if position.y < clip_pos.y as i32
@@ -1544,26 +1544,26 @@ impl<'a> RenderContext<'a> {
 
         let unclamped = self.anchor + self.cursor;
 
-        let position = Axis2D::map(|a| {
+        let pos = Axis2D::map(|a| {
             unclamped[a].clamp(
-                self.position[a] as i32,
-                (self.position[a] + self.physical_size[a]) as i32,
+                self.pos[a] as i32,
+                (self.pos[a] + self.physical_size[a]) as i32,
             ) as u16
         });
 
         size = Axis2D::map(|a| {
-            let lost = (position[a] as i32 - unclamped[a]).max(0) as u16;
+            let lost = (pos[a] as i32 - unclamped[a]).max(0) as u16;
             size[a]
                 .saturating_sub(lost)
-                .min(self.physical_size[a] - (position[a] - self.position[a]))
+                .min(self.physical_size[a] - (pos[a] - self.pos[a]))
         });
 
         let physical_size = Axis2D::map(|a| {
-            let child_end = position[a].saturating_add(size[a]);
-            let parent_logical_end = self.position[a].saturating_add(self.size[a]);
-            let parent_phys_end = self.position[a].saturating_add(self.physical_size[a]);
+            let child_end = pos[a].saturating_add(size[a]);
+            let parent_logical_end = self.pos[a].saturating_add(self.size[a]);
+            let parent_phys_end = self.pos[a].saturating_add(self.physical_size[a]);
             if child_end >= parent_logical_end {
-                parent_phys_end.saturating_sub(position[a])
+                parent_phys_end.saturating_sub(pos[a])
             } else {
                 size[a]
             }
@@ -1576,7 +1576,7 @@ impl<'a> RenderContext<'a> {
             style: self.style,
             base: self.style,
             anchor: self.anchor + self.cursor,
-            position,
+            pos,
             physical_size,
             size: virtual_size,
             viewport_pos: self.viewport_pos,
@@ -1587,7 +1587,7 @@ impl<'a> RenderContext<'a> {
     /// Returns a sub-context like [`region`](Self::region) with the viewport reset to this rect.
     pub fn viewport(&'_ mut self, size: Vec2<u16>) -> RenderContext<'_> {
         let mut ctx = self.region(size);
-        ctx.viewport_pos = ctx.position;
+        ctx.viewport_pos = ctx.pos;
         ctx.viewport_size = ctx.physical_size;
         ctx
     }
@@ -1676,7 +1676,7 @@ impl<'a> RenderContext<'a> {
         });
         let snapshot = CtxSnapshot {
             anchor: region.anchor,
-            position: snap_pos,
+            pos: snap_pos,
             physical_size: snap_size,
             size: region.size,
             viewport_pos: region.viewport_pos,
@@ -1721,8 +1721,8 @@ impl<'a> RenderContext<'a> {
         let unclamped = self.anchor + self.cursor;
         let viewport_pos = Axis2D::map(|a| {
             unclamped[a].clamp(
-                self.position[a] as i32,
-                (self.position[a] + self.physical_size[a]) as i32,
+                self.pos[a] as i32,
+                (self.pos[a] + self.physical_size[a]) as i32,
             ) as u16
         });
         let overflow = Axis2D::map(|a| {
@@ -1730,9 +1730,9 @@ impl<'a> RenderContext<'a> {
                 return 0u16;
             }
             let viewport_end = unclamped[a].saturating_add(viewport_size[a] as i32);
-            let parent_logical_end = (self.position[a] as i32)
+            let parent_logical_end = (self.pos[a] as i32)
                 .saturating_add(self.size[a] as i32);
-            let parent_phys_end = (self.position[a] as i32)
+            let parent_phys_end = (self.pos[a] as i32)
                 .saturating_add(self.physical_size[a] as i32);
             if viewport_end >= parent_logical_end && parent_phys_end > parent_logical_end {
                 1u16
@@ -1744,7 +1744,7 @@ impl<'a> RenderContext<'a> {
             let lost = (viewport_pos[a] as i32 - unclamped[a]).max(0) as u16;
             let cap = self.physical_size[a]
                 .saturating_add(overflow[a])
-                .saturating_sub(viewport_pos[a] - self.position[a]);
+                .saturating_sub(viewport_pos[a] - self.pos[a]);
             viewport_size[a]
                 .saturating_add(overflow[a])
                 .saturating_sub(lost)
@@ -1773,7 +1773,7 @@ impl<'a> RenderContext<'a> {
 
         let snapshot = CtxSnapshot {
             anchor: self.anchor + self.cursor + content_offset_clamped,
-            position: content_pos,
+            pos: content_pos,
             physical_size: content_size_clamped,
             size: content_size_clamped,
             viewport_pos: content_pos,

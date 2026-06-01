@@ -110,7 +110,7 @@ pub(crate) fn dispatch(
     let img_tl = ctx.anchor + Vec2::new(lay.cell_off.x as i32, lay.cell_off.y as i32);
     let img_br = img_tl + Vec2::new(lay.image_cells.x as i32, lay.image_cells.y as i32);
 
-    let clip_tl = Vec2::new(ctx.position.x as i32, ctx.position.y as i32);
+    let clip_tl = Vec2::new(ctx.pos.x as i32, ctx.pos.y as i32);
     let clip_br = clip_tl + Vec2::new(ctx.physical_size.x as i32, ctx.physical_size.y as i32);
 
     let vis_tl = Vec2::new(img_tl.x.max(clip_tl.x), img_tl.y.max(clip_tl.y));

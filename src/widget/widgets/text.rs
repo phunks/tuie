@@ -190,9 +190,9 @@ impl Widget for Text {
         let size = self.layout.rect.size;
 
         let visible_y_start =
-            (ctx.position.y as i32 - ctx.anchor.y).max(0) as usize;
+            (ctx.pos.y as i32 - ctx.anchor.y).max(0) as usize;
         let visible_y_end =
-            ((ctx.position.y + ctx.physical_size.y) as i32 - ctx.anchor.y)
+            ((ctx.pos.y + ctx.physical_size.y) as i32 - ctx.anchor.y)
                 as usize;
 
         let text = content.as_str();
