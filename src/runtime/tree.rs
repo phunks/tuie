@@ -186,7 +186,7 @@ pub(crate) fn perform_layout(root: &mut dyn Widget, size: Vec2<u16>, shrink_wrap
     recursive_after_layout(root);
 }
 
-pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], scroll: Vec2<Option<Align>>) {
+pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], align: Vec2<Option<Align>>) {
     if path.is_empty() {
         return;
     }
@@ -194,7 +194,7 @@ pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], scroll:
         widget: &mut dyn Widget,
         path: &[WidgetId],
         idx: usize,
-        scroll: Vec2<Option<Align>>,
+        align: Vec2<Option<Align>>,
         revelation: &mut crate::widget::Revelation,
     ) -> bool {
         if idx >= path.len() {
@@ -205,7 +205,7 @@ pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], scroll:
         }
         if idx == path.len() - 1 {
             revelation.push(Rect::new(Vec2::of(0i32), widget.get_rect_size()));
-            widget.reveal(None, revelation, scroll);
+            widget.reveal(None, revelation, align);
             return true;
         }
         let next_id = path[idx + 1];
@@ -215,7 +215,7 @@ pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], scroll:
             &mut |child| {
                 if !found && child.get_id() == next_id {
                     let child_content_pos = child.get_pos();
-                    if collect_and_focus(child, path, idx + 1, scroll, revelation) {
+                    if collect_and_focus(child, path, idx + 1, align, revelation) {
                         revelation.translate(child_content_pos - widget_content_pos);
                         found = true;
                     }
@@ -224,13 +224,13 @@ pub(crate) fn focus_along_path(root: &mut dyn Widget, path: &[WidgetId], scroll:
             Sign::Positive,
         );
         if found {
-            widget.reveal(Some(next_id), revelation, scroll);
+            widget.reveal(Some(next_id), revelation, align);
             return true;
         }
         false
     }
     let mut revelation = crate::widget::Revelation::new();
-    collect_and_focus(root, path, 0, scroll, &mut revelation);
+    collect_and_focus(root, path, 0, align, &mut revelation);
 }
 
 pub(crate) fn compute_focused_measure(root: &dyn Widget, path: &[WidgetId]) -> Option<FocusedMeasure> {

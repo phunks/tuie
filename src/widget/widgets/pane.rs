@@ -1430,7 +1430,7 @@ impl Widget for Pane {
         &mut self,
         _child: Option<WidgetId>,
         revelation: &mut Revelation,
-        scroll_align: Vec2<Option<Align>>,
+        align: Vec2<Option<Align>>,
     ) {
         let border = self.get_border_offset();
         let viewport = self.get_viewport_size();
@@ -1450,7 +1450,7 @@ impl Widget for Pane {
                 revelation.get_rects().iter()
                     .map(|r| (r.pos[a] - border[a] - inset_before, r.size[a] as i32)),
                 safe_viewport,
-                scroll_align[a],
+                align[a],
                 scrolloff,
             );
             let target = old_scroll[a] as i32 + d;

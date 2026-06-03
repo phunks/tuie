@@ -1327,7 +1327,7 @@ impl Widget for List {
         &mut self,
         child: Option<WidgetId>,
         revelation: &mut Revelation,
-        scroll_align: Vec2<Option<Align>>,
+        align: Vec2<Option<Align>>,
     ) {
         let a = self.orientation;
         let cross = a.flip();
@@ -1350,7 +1350,7 @@ impl Widget for List {
             revelation.get_rects().iter()
                 .map(|r| (self.screen_to_offset(r.pos[a], r.size[a] as i32), r.size[a] as i32)),
             vp_main,
-            scroll_align[a],
+            align[a],
             0,
         );
         self.anchor.offset -= main_delta;
@@ -1365,7 +1365,7 @@ impl Widget for List {
                 revelation.get_rects().iter()
                     .map(|r| (r.pos[cross] + cur, r.size[cross] as i32)),
                 vp_cross,
-                scroll_align[cross],
+                align[cross],
                 0,
             );
             let target = cur + cross_d;

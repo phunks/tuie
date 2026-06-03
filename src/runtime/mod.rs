@@ -2352,7 +2352,7 @@ impl Runtime {
 
     fn handle_reveal_request(&mut self, root: &mut dyn Widget) {
         if let Some(focus_id) = with_ctx_mut(|ctx| ctx.reveal_request.take()) {
-            let scroll = with_ctx_mut(|ctx| {
+            let align = with_ctx_mut(|ctx| {
                 std::mem::replace(&mut ctx.reveal_align, Vec2 { x: None, y: None })
             });
             let in_selected = self.focus_chain.contains(&focus_id);
@@ -2362,7 +2362,7 @@ impl Runtime {
                 root.find_path(focus_id).unwrap_or_else(|| self.focus_chain.clone())
             };
             let focus_root = self.find_root_for_path_mut(root, &path);
-            focus_along_path(focus_root, &path, scroll);
+            focus_along_path(focus_root, &path, align);
         }
     }
 

@@ -1001,9 +1001,9 @@ pub trait DelegateWidget: 'static {
         &mut self,
         child: Option<WidgetId>,
         revelation: &mut Revelation,
-        scroll: Vec2<Option<Align>>,
+        align: Vec2<Option<Align>>,
     ) {
-        self.get_delegate_mut().reveal(child, revelation, scroll);
+        self.get_delegate_mut().reveal(child, revelation, align);
     }
 
     /// Override hook for [`Widget::before_focus_move`].
@@ -1050,7 +1050,7 @@ pub trait DelegateWidget: 'static {
         &mut self,
         _child: Option<WidgetId>,
         _revelation: &Revelation,
-        _scroll: Vec2<Option<Align>>,
+        _align: Vec2<Option<Align>>,
     ) {}
 
     /// Called after [`Widget::before_focus_move`] on the delegate.
@@ -1218,10 +1218,10 @@ impl<T: DelegateWidget> Widget for T {
         &mut self,
         child: Option<WidgetId>,
         revelation: &mut Revelation,
-        scroll: Vec2<Option<Align>>,
+        align: Vec2<Option<Align>>,
     ) {
-        self.override_reveal(child, revelation, scroll);
-        self.after_reveal(child, revelation, scroll);
+        self.override_reveal(child, revelation, align);
+        self.after_reveal(child, revelation, align);
     }
 
     fn before_focus_move(
@@ -1516,7 +1516,7 @@ pub trait Widget: std::any::Any {
         &mut self,
         _child: Option<WidgetId>,
         _revelation: &mut Revelation,
-        _scroll: Vec2<Option<Align>>,
+        _align: Vec2<Option<Align>>,
     ) {}
 
     /// Called before focus moves between children.
