@@ -1787,14 +1787,14 @@ impl Pane {
         mut self: Box<Self>,
         edge: VerticalEdge,
         align: Align,
-        title: impl Into<String>,
+        title: impl Into<StyledString>,
     ) -> Box<Self> {
         self.set_title_at(edge, align, Some(title.into()));
         self
     }
 
     /// Sets the top-left title.
-    pub fn title(self: Box<Self>, title: impl Into<String>) -> Box<Self> {
+    pub fn title(self: Box<Self>, title: impl Into<StyledString>) -> Box<Self> {
         self.title_at(VerticalEdge::Top, Align::Start, title)
     }
 
@@ -1803,14 +1803,14 @@ impl Pane {
         &mut self,
         edge: VerticalEdge,
         align: Align,
-        title: Option<String>,
+        title: Option<StyledString>,
     ) {
         self.get_chrome_mut().set_title_at(edge, align, title);
         self.dirty_paint();
     }
 
     /// Sets or clears the top-left title.
-    pub fn set_title(&mut self, title: Option<String>) {
+    pub fn set_title(&mut self, title: Option<StyledString>) {
         self.set_title_at(VerticalEdge::Top, Align::Start, title);
     }
 

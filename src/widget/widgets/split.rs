@@ -20,7 +20,7 @@ pub struct SplitLeaf {
     bordered: bool,
     border: Option<&'static Border>,
     border_style: Style,
-    title: Option<String>,
+    title: Option<StyledString>,
     draggable: bool,
 }
 
@@ -43,6 +43,11 @@ impl SplitLeaf {
     /// Sets the border style for this leaf.
     pub fn set_border_style(&mut self, style: Style) {
         self.border_style = style;
+    }
+
+    /// Sets or clears the pane title rendered in the top border.
+    pub fn set_title(&mut self, title: Option<StyledString>) {
+        self.title = title;
     }
 }
 
@@ -1442,7 +1447,13 @@ impl SplitNode {
                             ctx.set_style(base_style.apply(leaf.border_style));
                             ctx.move_to(Vec2::new(title_x + 1, title_y));
                             let mut region = ctx.region(Vec2::new((available - 1) as u16, 1));
-                            write!(region, " {} ", title);
+                            write!(region, " ");
+                            for (chunk, style) in title.iter_chunks(..) {
+                                region.set_style(style);
+                                region.write(chunk);
+                            }
+                            region.set_style(Style::new());
+                            region.write(" ");
                         }
                     }
                 }
@@ -1895,7 +1906,7 @@ pub struct SplitPaneChild {
     bordered: bool,
     border: Option<&'static Border>,
     border_style: Style,
-    title: Option<String>,
+    title: Option<StyledString>,
     draggable: bool,
     content: SplitPaneContent,
 }
@@ -2092,7 +2103,7 @@ impl SplitPaneChild {
     }
 
     /// Sets the pane title rendered in the top border.
-    pub fn title(mut self, title: impl Into<String>) -> Self {
+    pub fn title(mut self, title: impl Into<StyledString>) -> Self {
         self.title = Some(title.into());
         self
     }
