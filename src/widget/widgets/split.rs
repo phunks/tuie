@@ -1849,25 +1849,6 @@ impl SplitNode {
         None
     }
 
-    fn set_container_flex_of(&mut self, target: WidgetId, flex: u8) -> bool {
-        let SplitNode::Container { children, .. } = self else {
-            return false;
-        };
-        for child in children.iter_mut() {
-            if child.node.contains(target) {
-                if let SplitNode::Container { flex: child_flex, .. } = &mut child.node {
-                    if *child_flex == flex {
-                        return false;
-                    }
-                    *child_flex = flex;
-                    return true;
-                }
-                return false;
-            }
-        }
-        false
-    }
-
     /// Replaces a single-child container with its child.
     fn collapse_singleton(&mut self) {
         let SplitNode::Container { children, .. } = self else {
@@ -2153,18 +2134,14 @@ impl SplitPane {
         }
     }
 
-    /// Creates an empty pane laying children out along the X axis.
-    pub fn horizontal() -> Self {
-        SplitPane {
-            orientation: Axis2D::X,
-            flex: 1,
-            children: Vec::new(),
-        }
+    /// Sets the orientation to [`Axis2D::X`].
+    pub fn horizontal(self) -> Self {
+        self.orientation(Axis2D::X)
     }
 
-    /// Creates an empty pane stacking children along the Y axis.
-    pub fn vertical() -> Self {
-        Self::horizontal().orientation(Axis2D::Y)
+    /// Sets the orientation to [`Axis2D::Y`].
+    pub fn vertical(self) -> Self {
+        self.orientation(Axis2D::Y)
     }
 
     /// Sets the layout `axis`.
@@ -2954,22 +2931,38 @@ impl Split {
         })
     }
 
-    /// Creates an empty split laying children out along the X axis.
-    pub fn horizontal() -> Box<Self> {
-        Self::new(SplitPane::horizontal())
-    }
-
-    /// Creates an empty split stacking children along the Y axis.
-    pub fn vertical() -> Box<Self> {
-        Self::new(SplitPane::vertical())
+    /// Builder form of [`Split::set_orientation`].
+    pub fn orientation(mut self: Box<Self>, axis: Axis2D) -> Box<Self> {
+        self.set_orientation(axis);
+        self
     }
 
     /// Sets the layout `axis` of the root container.
-    pub fn orientation(mut self: Box<Self>, axis: Axis2D) -> Box<Self> {
+    pub fn set_orientation(&mut self, axis: Axis2D) {
         if let SplitNode::Container { orientation, .. } = &mut self.root.node {
-            *orientation = axis;
+            if *orientation != axis {
+                *orientation = axis;
+                self.dirty_layout();
+            }
         }
-        self
+    }
+
+    /// Returns the layout axis of the root container.
+    pub fn get_orientation(&self) -> Axis2D {
+        match &self.root.node {
+            SplitNode::Container { orientation, .. } => *orientation,
+            SplitNode::Leaf(_) => Axis2D::Y,
+        }
+    }
+
+    /// Returns `true` when the orientation is [`Axis2D::X`].
+    pub fn is_horizontal(&self) -> bool {
+        self.get_orientation() == Axis2D::X
+    }
+
+    /// Returns `true` when the orientation is [`Axis2D::Y`].
+    pub fn is_vertical(&self) -> bool {
+        self.get_orientation() == Axis2D::Y
     }
 
     /// Appends `children` to the root container.
@@ -3088,15 +3081,6 @@ impl Split {
         self.root.push_to_root(new_node, axis, direction, self.gap);
         self.root.reinforce_mins(self.gap, self.chrome.padding, flow_output_size);
         self.dirty_layout();
-    }
-
-    /// Sets the flex weight of the container holding `target`.
-    pub fn set_container_flex_of(&mut self, target: WidgetId<impl ?Sized>, flex: u8) -> bool {
-        let changed = self.root.node.set_container_flex_of(target.untyped(), flex);
-        if changed {
-            self.dirty_layout();
-        }
-        changed
     }
 
     /// Returns whether `target` exists anywhere in the split.

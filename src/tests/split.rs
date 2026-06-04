@@ -9,7 +9,7 @@ fn pane_with_text(s: &str) -> Box<Pane> {
 #[test]
 fn renders_two_pane_horizontal_split() {
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(pane_with_text("L")),
             SplitPaneChild::from(pane_with_text("R")),
         ]),
@@ -31,7 +31,7 @@ fn renders_two_pane_horizontal_split() {
 #[test]
 fn renders_two_pane_vertical_split() {
     let mut split = Split::new(
-        SplitPane::vertical().children([
+        SplitPane::new().children([
             SplitPaneChild::from(pane_with_text("top")),
             SplitPaneChild::from(pane_with_text("bot")),
         ]),
@@ -49,7 +49,7 @@ fn renders_two_pane_vertical_split() {
 #[test]
 fn renders_three_pane_horizontal_split() {
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(pane_with_text("A")),
             SplitPaneChild::from(pane_with_text("B")),
             SplitPaneChild::from(pane_with_text("C")),
@@ -71,7 +71,7 @@ fn flex_ratio_distributes_widths() {
     let left = Pane::new().flex(1).children([Text::new().content("L")]);
     let right = Pane::new().flex(3).children([Text::new().content("R")]);
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(left),
             SplitPaneChild::from(right),
         ]),
@@ -92,12 +92,12 @@ fn flex_ratio_distributes_widths() {
 
 #[test]
 fn nested_splits_render() {
-    let inner = SplitPane::vertical().children([
+    let inner = SplitPane::new().children([
         SplitPaneChild::from(pane_with_text("TR")),
         SplitPaneChild::from(pane_with_text("BR")),
     ]);
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(pane_with_text("L")),
             SplitPaneChild::from(inner),
         ]),
@@ -114,7 +114,7 @@ fn nested_splits_render() {
 #[test]
 fn resize_reflows_split() {
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(pane_with_text("L")),
             SplitPaneChild::from(pane_with_text("R")),
         ]),
@@ -139,7 +139,7 @@ fn mouse_drag_moves_divider() {
     let left = Pane::new().flex(1).children([Text::new().content("L")]);
     let right = Pane::new().flex(1).children([Text::new().content("R")]);
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(left),
             SplitPaneChild::from(right),
         ]),
@@ -173,7 +173,7 @@ fn mouse_drag_moves_divider() {
 #[test]
 fn outer_border_wraps_split() {
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(pane_with_text("L")).borderless(),
             SplitPaneChild::from(pane_with_text("R")).borderless(),
         ]),
@@ -193,7 +193,7 @@ fn minimum_width_constraint_respected() {
     let left = Pane::new().min_width(8).children([Text::new().content("L")]);
     let right = Pane::new().min_width(8).children([Text::new().content("R")]);
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(left).borderless(),
             SplitPaneChild::from(right).borderless(),
         ]),
@@ -215,7 +215,7 @@ fn remove_collapses_pane() {
     let mid_id = mid.get_id();
     let right_id = right.get_id();
     let mut split = Split::new(
-        SplitPane::horizontal().children([
+        SplitPane::new().horizontal().children([
             SplitPaneChild::from(left),
             SplitPaneChild::from(mid),
             SplitPaneChild::from(right),
@@ -246,7 +246,7 @@ fn remove_collapses_pane() {
 fn split_root_adds_pane_at_runtime() {
     let first = pane_with_text("1");
     let mut split = Split::new(
-        SplitPane::horizontal().children([SplitPaneChild::from(first)]),
+        SplitPane::new().horizontal().children([SplitPaneChild::from(first)]),
     );
     let mut term = Emulator::new(&mut *split, Vec2::new(20, 3));
     assert!(term.get_snapshot_text().contains('1'));
