@@ -174,14 +174,14 @@ impl Tooltip {
 
     /// Builder form of [`Tooltip::set_content`].
     pub fn content(mut self: Box<Self>, body: Box<dyn Widget>) -> Box<Self> {
-        self.set_content(body);
+        self.set_content(Some(body));
         self
     }
 
-    /// Sets the floating body shown when the tooltip is visible.
-    pub fn set_content(&mut self, body: Box<dyn Widget>) {
+    /// Sets or clears the floating body shown when the tooltip is visible.
+    pub fn set_content(&mut self, body: Option<Box<dyn Widget>>) {
         let z = self.layer();
-        self.body = Some(Box::new(ZLayer { inner: body, z }));
+        self.body = body.map(|body| Box::new(ZLayer { inner: body, z }));
         self.dirty_layout();
     }
 
