@@ -10,6 +10,7 @@ pub use crate::ansi::ColorScheme;
 
 /// Event delivered to the runtime.
 #[derive(Clone, PartialEq)]
+#[non_exhaustive]
 pub enum RuntimeEvent {
     /// Keyboard or mouse input.
     Input(InputEvent),

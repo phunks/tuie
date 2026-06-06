@@ -123,6 +123,7 @@ impl std::fmt::Display for Scrollbar {
 
 /// Global default appearance for scrollbars.
 #[derive(Clone, Copy)]
+#[non_exhaustive]
 pub struct ScrollbarConfig {
     /// Glyph style used to draw the thumb.
     pub thumb: ScrollbarThumb,

@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 /// How the window's title bar is presented.
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum TitleBar {
     /// Transparent title bar with a top pad reserved above the grid.
     Padding,
@@ -48,6 +49,7 @@ impl std::fmt::Display for TitleBar {
 
 /// GUI backend configuration.
 #[derive(Clone)]
+#[non_exhaustive]
 pub struct GuiConfig {
     /// The system font family name.
     pub font_family: Option<String>,

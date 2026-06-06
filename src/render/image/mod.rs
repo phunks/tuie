@@ -82,6 +82,7 @@ impl ImageSource {
 
 /// Image rendering backend selection.
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ImageProtocol {
     /// Sixel DCS payload backend.
     Sixel,
@@ -104,6 +105,7 @@ impl std::fmt::Display for ImageProtocol {
 
 /// Default configuration for all [`Image`](crate::widget::widgets::image::Image) widgets.
 #[derive(Clone, Copy)]
+#[non_exhaustive]
 pub struct ImageConfig {
     /// The forced backend, or `None` to auto-select.
     pub protocol: Option<ImageProtocol>,

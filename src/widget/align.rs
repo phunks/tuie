@@ -71,6 +71,7 @@ impl From<Align> for FlexAlign {
 /// Parent-side positioning and slack distribution along an axis.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum Place {
     /// Pack items at the start of the axis.
     Start = 0,

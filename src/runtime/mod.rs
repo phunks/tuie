@@ -109,6 +109,7 @@ thread_local! {
 
 /// Runtime configuration.
 #[derive(Clone, Copy)]
+#[non_exhaustive]
 pub struct TuiConfig {
     /// The minimum number of rows or columns between the cursor and the scroll edge.
     pub scrolloff: u16,
@@ -135,6 +136,7 @@ crate::config_module!(TuiConfig {
 
 /// Terminal capabilities and dimensions.
 #[derive(Clone)]
+#[non_exhaustive]
 pub struct TerminalInfo {
     /// The terminal size in cells.
     pub size: Vec2<u16>,
@@ -187,6 +189,7 @@ impl FrameRender {
 
 /// Position and size of the focused widget.
 #[derive(Clone)]
+#[non_exhaustive]
 pub struct FocusedMeasure {
     /// The position of the focused widget in window coordinates.
     pub pos: Vec2<i32>,

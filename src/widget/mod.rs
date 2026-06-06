@@ -758,6 +758,7 @@ impl Layout {
 
 /// Interaction state of a widget, used to drive styling and event routing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub enum WidgetState {
     /// Neither focused nor hovered.
     None,
@@ -784,6 +785,7 @@ impl std::fmt::Display for WidgetState {
 }
 
 /// A type-erased message published by a widget.
+#[non_exhaustive]
 pub struct WidgetEvent {
     /// Id of the widget that emitted the event.
     pub source: WidgetId,

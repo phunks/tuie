@@ -4,6 +4,7 @@ use crate::prelude::*;
 
 /// Single input event with mouse position, [`Chord`], and repeat count.
 #[derive(Clone, PartialEq)]
+#[non_exhaustive]
 pub struct InputEvent {
     /// Mouse position as leaf-local cell plus sub-cell fraction.
     pub pos: Vec2<f32>,

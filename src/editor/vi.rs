@@ -123,6 +123,7 @@ fn find_matching_bracket<C: Cursor>(cursor: &mut C, text: &C::Text) -> bool {
 
 /// Editing mode of a [`ViBindings`] instance.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub enum ViMode {
     /// Normal command mode.
     Normal,
@@ -177,6 +178,7 @@ thread_local! {
 
 /// Cursor shape used for each [`ViMode`].
 #[derive(Clone, Copy)]
+#[non_exhaustive]
 pub struct ViCursorShapes {
     /// Shape shown in [`ViMode::Normal`].
     pub normal: CursorShape,
@@ -220,6 +222,7 @@ impl Default for ViCursorShapes {
 
 /// Options for a vi key mapping.
 #[derive(Clone, Copy, Default)]
+#[non_exhaustive]
 pub struct ViMapOpts {}
 
 impl ViMapOpts {
@@ -239,6 +242,7 @@ pub(crate) struct ViMapping {
 
 /// Configuration shared by all [`ViBindings`] instances.
 #[derive(Clone, Default)]
+#[non_exhaustive]
 pub struct ViConfig {
     pub(crate) normal_maps: Vec<ViMapping>,
     pub(crate) operator_maps: Vec<ViMapping>,

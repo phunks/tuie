@@ -51,6 +51,7 @@ impl<'a> DoubleEndedIterator for AsciiCursor<'a> {
 }
 
 /// One visual line emitted by [`TextOverflowLineIterator`].
+#[non_exhaustive]
 pub struct TextOverflowLineResult<'a> {
     /// Row index in the output area, starting at 0.
     pub y: usize,

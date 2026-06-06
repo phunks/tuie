@@ -8,6 +8,7 @@ use sign::Directional;
 
 /// Row or column track sizing specification.
 #[derive(Clone, Copy, Default)]
+#[non_exhaustive]
 pub struct Track {
     /// Minimum size in cells.
     pub min: Option<u16>,
@@ -75,6 +76,7 @@ impl Track {
 }
 
 /// A single widget placement inside a [`Grid`] at `(row, col)` with optional span and per-cell overrides.
+#[non_exhaustive]
 pub struct Cell {
     /// The child widget.
     pub widget: Box<dyn Widget>,

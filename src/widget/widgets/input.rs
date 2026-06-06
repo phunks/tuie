@@ -8,6 +8,7 @@ pub type InputBindingsFactory = fn() -> Box<dyn InputBindings<Text>>;
 
 /// Process-wide visual and behavioral settings for [`Input`].
 #[derive(Clone, Copy)]
+#[non_exhaustive]
 pub struct InputConfig {
     /// Style applied to the selected text range.
     pub selected_style: Style,
