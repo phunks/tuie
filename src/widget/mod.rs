@@ -459,12 +459,9 @@ pub struct Layout {
     pub flex: u8,
     /// The per-axis alignment override.
     pub align: AlignOverride,
-    /// Explicit per-axis minimum size, or `None` for the intrinsic minimum.
-    pub explicit_min: Vec2<Option<NonMaxU16>>,
-    /// Explicit per-axis maximum size, or `None` for unbounded.
-    pub explicit_max: Vec2<Option<NonMaxU16>>,
-    /// Explicit per-axis preferred size, or `None` for the intrinsic preferred size.
-    pub explicit_pref: Vec2<Option<NonMaxU16>>,
+    pub(crate) explicit_min: Vec2<Option<NonMaxU16>>,
+    pub(crate) explicit_max: Vec2<Option<NonMaxU16>>,
+    pub(crate) explicit_pref: Vec2<Option<NonMaxU16>>,
     flags: LayoutFlags,
     /// The cached min, max, and preferred sizes.
     pub constraints: Constraints,

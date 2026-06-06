@@ -141,7 +141,7 @@ pub enum ViMode {
 
 /// Pending operator applied to the next motion or text object.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ViOperator {
+enum ViOperator {
     /// Deletes the operated range.
     Delete,
     /// Yanks the operated range to the clipboard.
@@ -308,7 +308,7 @@ struct ViFindState {
 
 /// How an operator includes the range a motion covers.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Inclusivity {
+enum Inclusivity {
     /// Range stops one short of the motion endpoint.
     Exclusive,
     /// Range includes the grapheme at the motion endpoint.

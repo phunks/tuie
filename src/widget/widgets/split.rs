@@ -1911,11 +1911,8 @@ pub struct SplitPaneChild {
     content: SplitPaneContent,
 }
 
-/// Content payload of a [`SplitPaneChild`].
-pub enum SplitPaneContent {
-    /// A single widget leaf.
+pub(crate) enum SplitPaneContent {
     Widget(Box<dyn Widget>),
-    /// A nested split container.
     Split {
         orientation: Axis2D,
         flex: u8,

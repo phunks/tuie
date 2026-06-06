@@ -3,19 +3,13 @@
 use crate::prelude::*;
 use nonmax::NonMaxU8;
 
-/// Boolean text attribute encoded as a single bit in a [`Style`]'s attribute mask.
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum StyleAttribute {
-    /// Bold weight.
+pub(crate) enum StyleAttribute {
     Bold = 1 << 0,
-    /// Italic slant.
     Italic = 1 << 1,
-    /// Swaps foreground and background.
     Reverse = 1 << 2,
-    /// Strikethrough line.
     Strikethrough = 1 << 3,
-    /// Reduced intensity.
     Dim = 1 << 4,
 }
 
@@ -264,7 +258,7 @@ impl Style {
         self.attrs & (attr as u8) != 0
     }
 
-    /// Returns the raw packed bits for all [`StyleAttribute`] flags.
+    /// Returns the raw packed bits for all boolean attribute flags.
     pub const fn get_attrs_bits(&self) -> u8 {
         self.attrs
     }

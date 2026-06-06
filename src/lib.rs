@@ -5,7 +5,8 @@ extern crate self as tuie;
 #[doc(hidden)]
 pub use paste;
 
-pub mod ansi;
+#[allow(dead_code, unused_imports)]
+pub(crate) mod ansi;
 pub mod editor;
 pub mod emulator;
 #[cfg(feature = "gui")]
@@ -124,7 +125,6 @@ pub mod prelude {
     pub use super::widget::widgets::split::Split;
     pub use super::widget::widgets::split::SplitPane;
     pub use super::widget::widgets::split::SplitPaneChild;
-    pub use super::widget::widgets::split::SplitPaneContent;
     pub use super::render::style::StyledStr;
     pub use super::render::style::Style;
     pub use super::render::style::Stylize;

@@ -225,9 +225,8 @@ union GlyphData {
     index: u32,
 }
 
-/// One cell in the renderer's grid.
 #[derive(Clone, Copy)]
-pub struct GridCell {
+pub(crate) struct GridCell {
     style: GridCellStyle,
     flags: GridCellFlags,
     glyph_len: u8,
@@ -277,29 +276,6 @@ impl GridCell {
             && self.glyph(self_graphemes) == other.glyph(other_graphemes)
     }
 
-    /// Sets the glyph from a single char without grapheme or width measurement.
-    ///
-    /// # Safety
-    ///
-    /// `c` must be a single-cell-wide non-control character.
-    #[inline]
-    pub unsafe fn set_glyph_unchecked(&mut self, c: char) {
-        self.set_glyph_char(c);
-    }
-
-    /// Sets the glyph by recording an `idx`/`len` pair into the grapheme buffer.
-    ///
-    /// # Safety
-    ///
-    /// `len` must be `> 4`, `[idx, idx+len)` must be a valid single-cell-wide UTF-8 cluster in the
-    /// grapheme buffer, and the `WIDE` flag must be correct.
-    #[inline]
-    pub unsafe fn set_glyph_indexed_unchecked(&mut self, idx: u32, len: u8) {
-        self.glyph.index = idx;
-        self.glyph_len = len;
-    }
-
-    /// Clears the `WIDE` and `INVALID` flags on this cell.
     #[inline]
     pub fn mark_overwritten(&mut self) {
         let was_invalid = self.flags.0 & GridCellFlags::INVALID != 0;
@@ -660,7 +636,7 @@ pub(crate) struct DrainCtx {
 }
 
 /// Double-buffered cell grid backing [`GridRenderer`].
-pub struct GridRendererState {
+struct GridRendererState {
     cells: (Vec<GridCell>, Vec<GridCell>),
     graphemes: (Vec<u8>, Vec<u8>),
     size: Vec2<u16>,
@@ -875,7 +851,7 @@ impl GridRendererState {
     }
 }
 
-/// Widget-tree renderer backed by a [`GridRendererState`].
+/// Widget-tree renderer backed by a double-buffered cell grid.
 pub struct GridRenderer {
     state: GridRendererState,
 }

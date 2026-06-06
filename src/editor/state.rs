@@ -601,7 +601,7 @@ impl<T: TextDocument> EditorState<T> {
     }
 
     /// Steps the cursor one cell in `direction`, collapsing onto the selection edge on a horizontal step.
-    pub fn nav(&mut self, text: &T, direction: Direction2D) -> Affinity {
+    fn nav(&mut self, text: &T, direction: Direction2D) -> Affinity {
         if direction.axis() == Axis2D::X {
             if self.cursor == self.anchor {
                 self.cursor.move_grapheme(text, direction.screen_sign());
@@ -618,7 +618,7 @@ impl<T: TextDocument> EditorState<T> {
     }
 
     /// Steps the cursor one cell in `direction` without collapsing the selection.
-    pub fn nav_extend(&mut self, text: &T, direction: Direction2D) -> Affinity {
+    fn nav_extend(&mut self, text: &T, direction: Direction2D) -> Affinity {
         if direction.axis() == Axis2D::X {
             self.cursor.move_grapheme(text, direction.screen_sign());
             affinity_for_motion(direction.screen_sign())
@@ -629,19 +629,19 @@ impl<T: TextDocument> EditorState<T> {
     }
 
     /// Moves the cursor by one word in `sign`.
-    pub fn word(&mut self, text: &T, sign: Sign) -> Affinity {
+    fn word(&mut self, text: &T, sign: Sign) -> Affinity {
         self.cursor.move_word(text, sign);
         affinity_for_motion(sign)
     }
 
     /// Moves the cursor to the start or end of the current wrapped screen line.
-    pub fn screen_line_edge(&mut self, text: &T, sign: Sign) -> Affinity {
+    fn screen_line_edge(&mut self, text: &T, sign: Sign) -> Affinity {
         self.move_screen_line_edge(text, sign);
         affinity_for_motion(sign)
     }
 
     /// Moves the cursor to the start or end of the document.
-    pub fn document_edge(&mut self, text: &T, sign: Sign) -> Affinity {
+    fn document_edge(&mut self, text: &T, sign: Sign) -> Affinity {
         self.cursor.move_document_edge(text, sign);
         affinity_for_motion(sign)
     }
@@ -718,7 +718,7 @@ impl<T: TextDocument> EditorState<T> {
     }
 
     /// Extends the cursor to the document edge in `sign`, swapping cursor and anchor when reversing past the anchor.
-    pub fn grow_document_edge(&mut self, text: &T, sign: Sign) -> Affinity {
+    fn grow_document_edge(&mut self, text: &T, sign: Sign) -> Affinity {
         if self.cursor.get_index() == sign.flip().bound(text.len())
             && self.anchor.get_index() != sign.bound(text.len())
         {

@@ -58,8 +58,8 @@ pub(super) struct SixelQuantized {
 }
 
 pub(crate) struct KittyCache {
-    pub pixel_slot: Option<Rc<PixelSlot>>,
-    pub placements: Vec<(Vec2<u16>, Rc<PlacementInner>)>,
+    pub(super) pixel_slot: Option<Rc<PixelSlot>>,
+    pub(super) placements: Vec<(Vec2<u16>, Rc<PlacementInner>)>,
     pub decoded: Vec<(Vec2<u32>, AsyncEntry<Vec<u8>>)>,
 }
 
@@ -93,7 +93,7 @@ pub(super) enum GraphicsCache {
 
 pub(crate) struct SourceInner {
     pub data: Arc<SourceData>,
-    pub cache: RefCell<Option<GraphicsCache>>,
+    pub(super) cache: RefCell<Option<GraphicsCache>>,
 }
 
 impl SourceInner {
