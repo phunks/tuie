@@ -140,11 +140,6 @@ pub(crate) fn prepare(source: &ImageSource, placement_size: Vec2<u16>, fill: boo
     }
 }
 
-#[cfg(feature = "gui")]
-pub(crate) fn lookup_source(image_id: u32) -> Option<ImageSource> {
-    kitty::lookup_source(image_id).map(|inner| ImageSource { inner })
-}
-
 pub(crate) fn dispatch(ctx: &mut RenderContext, source: &ImageSource, fill: bool) {
     let placement_size = ctx.size;
     if placement_size.x == 0 || placement_size.y == 0 {
