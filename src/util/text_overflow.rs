@@ -571,17 +571,17 @@ impl TextOverflow {
     }
 
     /// Returns whether to break at word-class boundaries rather than mid-grapheme.
-    pub const fn get_split(&self) -> bool {
+    pub const fn splits(&self) -> bool {
         self.split
     }
 
     /// Returns whether to wrap overflowing content onto a new line.
-    pub const fn get_wrap(&self) -> bool {
+    pub const fn wraps(&self) -> bool {
         self.wrap
     }
 
     /// Returns whether to drop whitespace at the wrap point.
-    pub const fn get_trim(&self) -> bool {
+    pub const fn trims(&self) -> bool {
         self.trim
     }
 

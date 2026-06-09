@@ -202,7 +202,7 @@ impl Tooltip {
 
     crate::style_field! {
         /// Whether the body hides when the anchor loses hover or focus.
-        autohide: bool
+        autohide as autohides: bool
     }
 }
 

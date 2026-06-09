@@ -1831,12 +1831,12 @@ impl Grid {
 
     crate::field! {
         /// Whether columns can be resized by dragging their gutters.
-        resizable_cols: bool
+        resizable_cols as has_resizable_cols: bool
     }
 
     crate::field! {
         /// Whether rows can be resized by dragging their gutters.
-        resizable_rows: bool
+        resizable_rows as has_resizable_rows: bool
     }
 
     /// Builder form that enables drag-resize on both axes.

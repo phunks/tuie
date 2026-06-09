@@ -139,7 +139,7 @@ impl<T: TextDocument> Editor<T> {
     }
 
     /// Returns whether the selection includes the grapheme under the cursor.
-    pub fn is_inclusive_selection(&self) -> bool {
+    pub fn has_inclusive_selection(&self) -> bool {
         self.state.inclusive_selection
     }
 

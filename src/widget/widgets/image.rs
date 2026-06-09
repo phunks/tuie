@@ -143,6 +143,6 @@ impl Image {
 
     crate::style_field! {
         /// Whether the image stretches to fill the area instead of letterboxing.
-        fill: bool
+        fill as fills: bool
     }
 }
