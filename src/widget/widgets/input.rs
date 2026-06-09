@@ -250,6 +250,12 @@ impl Input {
         self
     }
 
+    /// Builder form of [`Input::set_placeholder`] accepting an `Option`.
+    pub fn placeholder_opt(mut self: Box<Self>, placeholder: Option<Box<Text>>) -> Box<Self> {
+        self.set_placeholder(placeholder);
+        self
+    }
+
     /// Sets the [`Text`] shown when the input is empty.
     pub fn set_placeholder(&mut self, placeholder: Option<Box<Text>>) {
         self.placeholder = placeholder;
