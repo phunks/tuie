@@ -90,10 +90,11 @@ impl std::str::FromStr for Color {
             .or_else(|| s.strip_prefix("0X"))
             .map(|stripped| (stripped, true))
             .unwrap_or((s, false));
-        if !had_prefix && s.len() <= 3 {
-            if let Ok(n) = s.parse::<u8>() {
-                return Ok(Color::Indexed(n));
-            }
+        if !had_prefix
+            && s.len() <= 3
+            && let Ok(n) = s.parse::<u8>()
+        {
+            return Ok(Color::Indexed(n));
         }
         let hex_byte = |range: std::ops::Range<usize>| u8::from_str_radix(&hex[range], 16).ok();
         let parsed = match hex.len() {

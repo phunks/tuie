@@ -1794,20 +1794,19 @@ impl<T: TextDocument + 'static> ViBindings<T> {
     }
 
     fn parse_mark_target(
-        &self, state: &EditorState<T>, text: &T,
+        &self,
+        state: &EditorState<T>,
+        text: &T,
         event: &InputEvent,
         queue: &mut InputQueue,
     ) -> Option<(usize, bool)> {
         let linewise = matches!(event.chord, chord!('\''));
         let ev2 = queue.next()?;
-        if let chord!(Char(c)) = ev2.chord {
-            if c.is_ascii_alphabetic() || c == '^' {
-                if let Some(target) =
-                    self.resolve_mark_target(state, text, c as u8, linewise)
-                {
-                    return Some((target, linewise));
-                }
-            }
+        if let chord!(Char(c)) = ev2.chord
+            && (c.is_ascii_alphabetic() || c == '^')
+            && let Some(target) = self.resolve_mark_target(state, text, c as u8, linewise)
+        {
+            return Some((target, linewise));
         }
         None
     }
@@ -2613,7 +2612,10 @@ impl<T: TextDocument + 'static> ViBindings<T> {
     }
 
     fn parse_normal_queue_inner(
-        &mut self, state: &mut EditorState<T>, text: &mut T, queue: &mut InputQueue,
+        &mut self,
+        state: &mut EditorState<T>,
+        text: &mut T,
+        queue: &mut InputQueue,
     ) -> bool {
         let count = std::cmp::max(Self::read_count(queue), 1);
         let Some(event) = queue.next() else { return false; };
@@ -2655,10 +2657,10 @@ impl<T: TextDocument + 'static> ViBindings<T> {
             }
             chord!(m) => {
                 let Some(ev2) = queue.next() else { return false; };
-                if let chord!(Char(c)) = ev2.chord {
-                    if c.is_ascii_alphabetic() {
-                        self.set_mark(c as u8, state.cursor.get_index());
-                    }
+                if let chord!(Char(c)) = ev2.chord
+                    && c.is_ascii_alphabetic()
+                {
+                    self.set_mark(c as u8, state.cursor.get_index());
                 }
                 return true;
             }
@@ -2785,7 +2787,10 @@ impl<T: TextDocument + 'static> ViBindings<T> {
     }
 
     fn parse_operator_inner(
-        &mut self, state: &mut EditorState<T>, text: &mut T, op: ViOperator,
+        &mut self,
+        state: &mut EditorState<T>,
+        text: &mut T,
+        op: ViOperator,
         op_count: usize,
         motion_count: usize,
         queue: &mut InputQueue,
@@ -2813,10 +2818,13 @@ impl<T: TextDocument + 'static> ViBindings<T> {
 
         if matches!(event.chord, chord!(i) | chord!(a)) {
             let inner = matches!(event.chord, chord!(i));
-            let Some(ev2) = queue.next() else { return false; };
-            if let chord!(Char(c)) = ev2.chord {
-                if self.text_object_range(state, text, c, inner) {
-                    if c == 'p' {
+            let Some(ev2) = queue.next() else {
+                return false;
+            };
+            if let chord!(Char(c)) = ev2.chord
+                && self.text_object_range(state, text, c, inner)
+            {
+                if c == 'p' {
                         let len = text.len();
                         let at_eof_blank = state.cursor.get_index() == len
                             && state.anchor.get_index() > 0
@@ -2850,7 +2858,6 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                     self.complete_op(state, text);
                     return true;
                 }
-            }
             return true;
         }
 
@@ -3459,10 +3466,7 @@ impl<T: TextDocument + 'static> ViBindings<T> {
         true
     }
 
-    fn check_mode_mappings(
-        mode: ViMode,
-        queue: &[InputEvent],
-    ) -> Result<Option<Vec<Chord>>, ()> {
+    fn check_mode_mappings(mode: ViMode, queue: &[InputEvent]) -> Result<Option<Vec<Chord>>, ()> {
         config::with(|cfg| {
             let maps = match mode {
                 ViMode::Normal => &cfg.normal_maps,
@@ -3478,12 +3482,18 @@ impl<T: TextDocument + 'static> ViBindings<T> {
         })
     }
 
-    fn on_input_inner(&mut self, state: &mut EditorState<T>, text: &mut T, queue: &mut InputQueue) -> bool {
-        if let Some(event) = queue.peek() {
-            if let Trigger::Paste(paste) = &event.chord.trigger {
-                queue.next();
-                state.seal_undo_group();
-                match self.mode {
+    fn on_input_inner(
+        &mut self,
+        state: &mut EditorState<T>,
+        text: &mut T,
+        queue: &mut InputQueue,
+    ) -> bool {
+        if let Some(event) = queue.peek()
+            && let Trigger::Paste(paste) = &event.chord.trigger
+        {
+            queue.next();
+            state.seal_undo_group();
+            match self.mode {
                     ViMode::Normal | ViMode::Operator => {
                         self.paste_str_at(state, text, paste, Sign::Positive);
                     }
@@ -3498,7 +3508,6 @@ impl<T: TextDocument + 'static> ViBindings<T> {
                 }
                 return true;
             }
-        }
         match self.mode {
             ViMode::Normal | ViMode::Operator => {
                 if !queue.is_flushing() {

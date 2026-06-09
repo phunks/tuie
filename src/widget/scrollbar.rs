@@ -368,12 +368,12 @@ impl ScrollbarState {
         F: Fn(&W) -> Option<(&ScrollbarStyle, &ScrollbarState)> + 'static,
     {
         #[cfg(feature = "gui")]
-        if crate::is_gui() {
-            if let Some(cell_px) = crate::get_runtime_info()
+        if crate::is_gui()
+            && let Some(cell_px) = crate::get_runtime_info()
                 .cell_size
                 .map(|c| c[axis])
                 .filter(|&v| v > 1)
-            {
+        {
                 let thumb = style.get_resolved_thumb();
                 let thumb_top = self.thumb_top(view, thumb.get_subpixels(axis) as f32);
                 let thumb_top_px = (thumb_top * cell_px as f32).round() as i32;
@@ -410,7 +410,6 @@ impl ScrollbarState {
                 );
                 return;
             }
-        }
         #[cfg(not(feature = "gui"))]
         {
             let _ = (widget, accessor);

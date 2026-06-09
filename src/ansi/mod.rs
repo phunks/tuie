@@ -357,10 +357,10 @@ mod unix {
             if unsafe { libc::FD_ISSET(self.fd, &read_set) } {
                 self.drain_tty()?;
             }
-            if let Some(w) = winch_fd {
-                if unsafe { libc::FD_ISSET(w, &read_set) } {
-                    self.drain_winch()?;
-                }
+            if let Some(w) = winch_fd
+                && unsafe { libc::FD_ISSET(w, &read_set) }
+            {
+                self.drain_winch()?;
             }
             let woken = match self.wake {
                 Some(w) => unsafe { libc::FD_ISSET(w, &read_set) },
@@ -436,5 +436,4 @@ mod unix {
             Ok(())
         }
     }
-
 }

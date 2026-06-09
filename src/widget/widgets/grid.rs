@@ -261,92 +261,92 @@ impl Grid {
 
     fn resolve_h_edge(&self, r: usize, c: usize) -> Option<&'static Border> {
         let n_rows = self.rows.len();
-        if r > 0 && r < n_rows {
-            if let (Some(a), Some(b)) = (self.cell_covering(r - 1, c), self.cell_covering(r, c)) {
-                if std::ptr::eq(a, b) {
-                    return None;
-                }
-            }
+        if r > 0
+            && r < n_rows
+            && let (Some(a), Some(b)) = (self.cell_covering(r - 1, c), self.cell_covering(r, c))
+            && std::ptr::eq(a, b)
+        {
+            return None;
         }
-        if r > 0 {
-            if let Some(cell) = self.cell_covering(r - 1, c) {
-                if let Some(b) = cell.border {
-                    return Some(b);
-                }
-            }
+        if r > 0
+            && let Some(cell) = self.cell_covering(r - 1, c)
+            && let Some(b) = cell.border
+        {
+            return Some(b);
         }
-        if r < n_rows {
-            if let Some(cell) = self.cell_covering(r, c) {
-                if let Some(b) = cell.border {
-                    return Some(b);
-                }
-            }
+        if r < n_rows
+            && let Some(cell) = self.cell_covering(r, c)
+            && let Some(b) = cell.border
+        {
+            return Some(b);
         }
-        if r > 0 {
-            if let Some(b) = self.rows[r - 1].end {
-                return Some(b);
-            }
+        if r > 0
+            && let Some(b) = self.rows[r - 1].end
+        {
+            return Some(b);
         }
-        if r < n_rows {
-            if let Some(b) = self.rows[r].start {
-                return Some(b);
-            }
+        if r < n_rows
+            && let Some(b) = self.rows[r].start
+        {
+            return Some(b);
         }
-        if r > 0 && r < n_rows {
-            if let Some(b) = self.row_borders {
-                return Some(b);
-            }
+        if r > 0
+            && r < n_rows
+            && let Some(b) = self.row_borders
+        {
+            return Some(b);
         }
-        if (r == 0 || r == n_rows) && n_rows > 0 {
-            if let Some(b) = self.border {
-                return Some(b);
-            }
+        if (r == 0 || r == n_rows)
+            && n_rows > 0
+            && let Some(b) = self.border
+        {
+            return Some(b);
         }
         None
     }
 
     fn resolve_v_edge(&self, r: usize, c: usize) -> Option<&'static Border> {
         let n_cols = self.columns.len();
-        if c > 0 && c < n_cols {
-            if let (Some(a), Some(b)) = (self.cell_covering(r, c - 1), self.cell_covering(r, c)) {
-                if std::ptr::eq(a, b) {
-                    return None;
-                }
-            }
+        if c > 0
+            && c < n_cols
+            && let (Some(a), Some(b)) = (self.cell_covering(r, c - 1), self.cell_covering(r, c))
+            && std::ptr::eq(a, b)
+        {
+            return None;
         }
-        if c > 0 {
-            if let Some(cell) = self.cell_covering(r, c - 1) {
-                if let Some(b) = cell.border {
-                    return Some(b);
-                }
-            }
+        if c > 0
+            && let Some(cell) = self.cell_covering(r, c - 1)
+            && let Some(b) = cell.border
+        {
+            return Some(b);
         }
-        if c < n_cols {
-            if let Some(cell) = self.cell_covering(r, c) {
-                if let Some(b) = cell.border {
-                    return Some(b);
-                }
-            }
+        if c < n_cols
+            && let Some(cell) = self.cell_covering(r, c)
+            && let Some(b) = cell.border
+        {
+            return Some(b);
         }
-        if c > 0 {
-            if let Some(b) = self.columns[c - 1].end {
-                return Some(b);
-            }
+        if c > 0
+            && let Some(b) = self.columns[c - 1].end
+        {
+            return Some(b);
         }
-        if c < n_cols {
-            if let Some(b) = self.columns[c].start {
-                return Some(b);
-            }
+        if c < n_cols
+            && let Some(b) = self.columns[c].start
+        {
+            return Some(b);
         }
-        if c > 0 && c < n_cols {
-            if let Some(b) = self.col_borders {
-                return Some(b);
-            }
+        if c > 0
+            && c < n_cols
+            && let Some(b) = self.col_borders
+        {
+            return Some(b);
         }
-        if (c == 0 || c == n_cols) && n_cols > 0 {
-            if let Some(b) = self.border {
-                return Some(b);
-            }
+        if (c == 0 || c == n_cols)
+            && n_cols > 0
+            && let Some(b) = self.border
+        {
+            return Some(b);
         }
         None
     }
@@ -774,14 +774,10 @@ impl Grid {
         if boundary == 0 || boundary >= self.rows.len() {
             return None;
         }
-        let start = self.state.row_off[boundary - 1] as i32
-            + self.state.rows[boundary - 1].target as i32;
+        let start =
+            self.state.row_off[boundary - 1] as i32 + self.state.rows[boundary - 1].target as i32;
         let end = self.state.row_off[boundary] as i32;
-        if end > start {
-            Some(start..end)
-        } else {
-            None
-        }
+        if end > start { Some(start..end) } else { None }
     }
 
     fn find_divider_at(&self, pos: Vec2<i32>) -> Option<(Axis2D, usize, i32)> {
@@ -791,21 +787,21 @@ impl Grid {
         let content_w = self.state.col_off.get(n_cols).copied().unwrap_or(0) as i32;
         if self.resizable_cols && (0..content_h).contains(&pos.y) {
             for b in 1..n_cols {
-                if let Some(r) = self.col_gutter_x(b) {
-                    if r.contains(&pos.x) {
-                        let center = (r.start + r.end) / 2;
-                        return Some((Axis2D::X, b, center));
-                    }
+                if let Some(r) = self.col_gutter_x(b)
+                    && r.contains(&pos.x)
+                {
+                    let center = (r.start + r.end) / 2;
+                    return Some((Axis2D::X, b, center));
                 }
             }
         }
         if self.resizable_rows && (0..content_w).contains(&pos.x) {
             for b in 1..n_rows {
-                if let Some(r) = self.row_gutter_y(b) {
-                    if r.contains(&pos.y) {
-                        let center = (r.start + r.end) / 2;
-                        return Some((Axis2D::Y, b, center));
-                    }
+                if let Some(r) = self.row_gutter_y(b)
+                    && r.contains(&pos.y)
+                {
+                    let center = (r.start + r.end) / 2;
+                    return Some((Axis2D::Y, b, center));
                 }
             }
         }
@@ -992,8 +988,8 @@ impl Grid {
         }
         h_div_y.push(self.state.row_off[n_rows]);
 
-        for r in 0..=n_rows {
-            let y = h_div_y[r] as i32;
+        for (r, &y_raw) in h_div_y.iter().enumerate() {
+            let y = y_raw as i32;
             for c in 0..n_cols {
                 if let Some(b) = self.resolve_h_edge(r, c) {
                     let mut s = base;
@@ -1016,8 +1012,8 @@ impl Grid {
             }
         }
 
-        for c in 0..=n_cols {
-            let x = v_div_x[c] as i32;
+        for (c, &x_raw) in v_div_x.iter().enumerate() {
+            let x = x_raw as i32;
             for r in 0..n_rows {
                 if let Some(b) = self.resolve_v_edge(r, c) {
                     let mut s = base;
@@ -1041,8 +1037,8 @@ impl Grid {
         }
 
         ctx.set_style(base);
-        for r in 0..=n_rows {
-            for c in 0..=n_cols {
+        for (r, &y_raw) in h_div_y.iter().enumerate() {
+            for (c, &x_raw) in v_div_x.iter().enumerate() {
                 let l = if c > 0 { self.resolve_h_edge(r, c - 1) } else { None };
                 let rt = if c < n_cols { self.resolve_h_edge(r, c) } else { None };
                 let u = if r > 0 { self.resolve_v_edge(r - 1, c) } else { None };
@@ -1072,7 +1068,7 @@ impl Grid {
                     (false, true) => u.or(d).map(|b| b.get_edge(Axis2D::X)),
                 };
                 if let Some(g) = glyph {
-                    ctx.move_to(Vec2::new(v_div_x[c] as i32, h_div_y[r] as i32));
+                    ctx.move_to(Vec2::new(x_raw as i32, y_raw as i32));
                     write!(ctx, "{}", g);
                 }
             }
@@ -1898,4 +1894,3 @@ impl Grid {
         self.row_drag_size.get(row as usize).copied().flatten()
     }
 }
-

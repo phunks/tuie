@@ -699,10 +699,10 @@ fn take_quit_handlers() -> Vec<Box<dyn FnMut(&mut dyn Write)>> {
         let mut i = ctx.tasks.items.len();
         while i > 0 {
             i -= 1;
-            if matches!(ctx.tasks.items[i].1, TaskKind::Quit(_)) {
-                if let (_, TaskKind::Quit(cb)) = ctx.tasks.items.swap_remove(i) {
-                    out.push(cb);
-                }
+            if matches!(ctx.tasks.items[i].1, TaskKind::Quit(_))
+                && let (_, TaskKind::Quit(cb)) = ctx.tasks.items.swap_remove(i)
+            {
+                out.push(cb);
             }
         }
         out.reverse();
@@ -910,22 +910,22 @@ pub(crate) fn update(
     let next_timeout = with_runtime_mut(|rt| rt.handle_events_finish(root));
 
     #[cfg(feature = "gui")]
-    if let Some(Some(deadline)) = try_with_gui_state(|s| s.next_blink_wake) {
-        if std::time::Instant::now() >= deadline {
-            dirty_paint();
-        }
+    if let Some(Some(deadline)) = try_with_gui_state(|s| s.next_blink_wake)
+        && std::time::Instant::now() >= deadline
+    {
+        dirty_paint();
     }
 
     let outcome = with_runtime_mut(|rt| rt.layout_and_render(root))?;
 
-    if is_gui() {
-        if let FrameRender::Painted(cursor) = outcome {
-            #[cfg(feature = "gui")]
-            with_runtime_mut(|rt| rt.present_gui(root, cursor));
-            #[cfg(not(feature = "gui"))]
-            let _ = cursor;
+    if is_gui()
+        && let FrameRender::Painted(cursor) = outcome
+    {
+        #[cfg(feature = "gui")]
+        with_runtime_mut(|rt| rt.present_gui(root, cursor));
+        #[cfg(not(feature = "gui"))]
+        let _ = cursor;
         }
-    }
 
     #[cfg(feature = "gui")]
     let next_timeout = {
@@ -1543,12 +1543,7 @@ impl Runtime {
         }
     }
 
-    fn handle_hover(
-        &mut self,
-        root: &mut dyn Widget,
-        pos: Vec2<f32>,
-        release: bool,
-    ) {
+    fn handle_hover(&mut self, root: &mut dyn Widget, pos: Vec2<f32>, release: bool) {
         let mut new_path: Vec<WidgetId> = vec![];
         let new_id = if pos.x < 0.0 {
             None
@@ -1577,10 +1572,8 @@ impl Runtime {
 
         let old_id = self.mouse_path.last().copied();
         if old_id == new_id {
-            if release {
-                if let Some(wid) = old_id {
-                    self.set_widget_hover_by_id(root, wid, true);
-                }
+            if release && let Some(wid) = old_id {
+                self.set_widget_hover_by_id(root, wid, true);
             }
             return;
         }
@@ -1671,11 +1664,15 @@ impl Runtime {
         root
     }
 
-    fn find_root_for_path_mut<'a>(&'a mut self, root: &'a mut dyn Widget, path: &[WidgetId]) -> &'a mut dyn Widget {
-        if let Some(&first) = path.first() {
-            if let Some(popup) = self.popups.iter_mut().find(|p| p.content.get_id() == first) {
-                return &mut *popup.content;
-            }
+    fn find_root_for_path_mut<'a>(
+        &'a mut self,
+        root: &'a mut dyn Widget,
+        path: &[WidgetId],
+    ) -> &'a mut dyn Widget {
+        if let Some(&first) = path.first()
+            && let Some(popup) = self.popups.iter_mut().find(|p| p.content.get_id() == first)
+        {
+            return &mut *popup.content;
         }
         root
     }
@@ -1836,12 +1833,12 @@ impl Runtime {
             } else {
                 self.curswant = center;
             }
-            if let Some(resolved_id) = resolved {
-                if resolved_id != widget_id {
-                    self.process_focus_request(root, resolved_id, false);
-                    reveal(resolved_id, Vec2 { x: None, y: None });
-                    return;
-                }
+            if let Some(resolved_id) = resolved
+                && resolved_id != widget_id
+            {
+                self.process_focus_request(root, resolved_id, false);
+                reveal(resolved_id, Vec2 { x: None, y: None });
+                return;
             }
             self.update_focus_chain(root, path);
             dirty_paint();
@@ -2121,7 +2118,12 @@ impl Runtime {
         }
     }
 
-    fn handle_scroll(&mut self, root: &mut dyn Widget, event: &mut InputEvent, direction: Direction2D) -> InputResult {
+    fn handle_scroll(
+        &mut self,
+        root: &mut dyn Widget,
+        event: &mut InputEvent,
+        direction: Direction2D,
+    ) -> InputResult {
         let (edge_window, alive_window) = match with_ctx(|c| c.mode) {
             Mode::Gui => (
                 std::time::Duration::from_millis(100),
@@ -2135,14 +2137,17 @@ impl Runtime {
 
         let now = std::time::Instant::now();
         let elapsed = now.duration_since(self.last_scroll);
-        let near_prev = event.pos.diff(self.scroll_pos).all_le(Vec2::new(2.0_f32, 1.0_f32));
+        let near_prev = event
+            .pos
+            .diff(self.scroll_pos)
+            .all_le(Vec2::new(2.0_f32, 1.0_f32));
 
-        if near_prev {
-            if let Some(&scroll_wid) = self.scroll_path.last() {
-                let can_scroll = root.find(scroll_wid).is_some_and(|w| w.can_scroll(direction));
-                let alive = self.scroll_held
-                    || elapsed < edge_window
-                    || (can_scroll && elapsed < alive_window);
+        if near_prev && let Some(&scroll_wid) = self.scroll_path.last() {
+            let can_scroll = root
+                .find(scroll_wid)
+                .is_some_and(|w| w.can_scroll(direction));
+            let alive =
+                self.scroll_held || elapsed < edge_window || (can_scroll && elapsed < alive_window);
                 if alive {
                     let result = if can_scroll {
                         let path = self.scroll_path.clone();
@@ -2154,7 +2159,6 @@ impl Runtime {
                     return result;
                 }
             }
-        }
 
         self.scroll_pos = event.pos;
         self.scroll_path = build_scroll_path(root, event.pos, direction);
@@ -2216,11 +2220,11 @@ impl Runtime {
                 let widget_path = WidgetPath::from_ids(ancestors_ids);
                 let mut event = WidgetEvent::new(source_id, emitted.payload);
 
-                if let Some(&first) = widget_path.as_slice().first() {
-                    if let Some(popup) = self.popups.iter_mut().find(|p| p.content.get_id() == first) {
-                        widget_path.emit_event(&mut *popup.content, &mut event);
-                        continue;
-                    }
+                if let Some(&first) = widget_path.as_slice().first()
+                    && let Some(popup) = self.popups.iter_mut().find(|p| p.content.get_id() == first)
+                {
+                    widget_path.emit_event(&mut *popup.content, &mut event);
+                    continue;
                 }
                 widget_path.emit_event(root, &mut event);
             }
@@ -2676,4 +2680,3 @@ fn seed_popup_queue(
         ctx.queue_popup(&*popup.content, pos);
     }
 }
-

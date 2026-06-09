@@ -188,10 +188,10 @@ impl Parser {
         }
         let alt = self.utf8_alt;
         self.state = State::Ground;
-        if let Ok(s) = std::str::from_utf8(&self.utf8_buf) {
-            if let Some(c) = s.chars().next() {
-                self.push_key(Key::Char(c), mods(false, alt, false));
-            }
+        if let Ok(s) = std::str::from_utf8(&self.utf8_buf)
+            && let Some(c) = s.chars().next()
+        {
+            self.push_key(Key::Char(c), mods(false, alt, false));
         }
         self.utf8_buf.clear();
     }
@@ -331,11 +331,14 @@ impl Parser {
             }
         };
 
-        if modifiers.has(Modifier::Shift) {
-            if let Some(shifted) = code_parts.next().and_then(parse_u32).and_then(char::from_u32) {
-                key = Key::Char(shifted);
-                modifiers.set(Modifier::Shift, false);
-            }
+        if modifiers.has(Modifier::Shift)
+            && let Some(shifted) = code_parts
+                .next()
+                .and_then(parse_u32)
+                .and_then(char::from_u32)
+        {
+            key = Key::Char(shifted);
+            modifiers.set(Modifier::Shift, false);
         }
         self.push_key(key, modifiers);
     }
@@ -380,10 +383,10 @@ impl Parser {
             Some(v) => v,
             None => return,
         };
-        if last == b'm' {
-            if let Trigger::MouseDown(btn) = trigger {
-                trigger = Trigger::MouseUp(btn);
-            }
+        if last == b'm'
+            && let Trigger::MouseDown(btn) = trigger
+        {
+            trigger = Trigger::MouseUp(btn);
         }
         self.out.push_back(ParsedEvent::Mouse(MouseInput {
             trigger,
@@ -548,11 +551,11 @@ impl Parser {
                     b,
                 }));
             }
-        } else if let Some(color_type) = ColorType::from_osc_number(osc_num) {
-            if let Some((r, g, b)) = parse_rgb_spec(rest) {
-                self.out
-                    .push_back(ParsedEvent::Color(ColorEntry { color_type, r, g, b }));
-            }
+        } else if let Some(color_type) = ColorType::from_osc_number(osc_num)
+            && let Some((r, g, b)) = parse_rgb_spec(rest)
+        {
+            self.out
+                .push_back(ParsedEvent::Color(ColorEntry { color_type, r, g, b }));
         }
     }
 
@@ -563,10 +566,10 @@ impl Parser {
             self.buf.truncate(len - 2);
             let body = std::mem::take(&mut self.buf);
             self.state = State::Ground;
-            if let Some(version) = body.strip_prefix(b">|") {
-                if let Ok(s) = std::str::from_utf8(version) {
-                    self.out.push_back(ParsedEvent::XtVersion(s.to_owned()));
-                }
+            if let Some(version) = body.strip_prefix(b">|")
+                && let Ok(s) = std::str::from_utf8(version)
+            {
+                self.out.push_back(ParsedEvent::XtVersion(s.to_owned()));
             }
         }
     }
@@ -578,17 +581,17 @@ impl Parser {
             self.buf.truncate(len - 2);
             let body = std::mem::take(&mut self.buf);
             self.state = State::Ground;
-            if let Some(rest) = body.strip_prefix(b"G") {
-                if let Ok(s) = std::str::from_utf8(rest) {
-                    let (keys, status) = s.split_once(';').unwrap_or((s, ""));
-                    let id = keys
-                        .split(',')
-                        .find_map(|kv| kv.strip_prefix("i="))
-                        .and_then(|v| v.parse().ok())
-                        .unwrap_or(0);
-                    let ok = status.starts_with("OK");
-                    self.out.push_back(ParsedEvent::KittyGraphicsReply { id, ok });
-                }
+            if let Some(rest) = body.strip_prefix(b"G")
+                && let Ok(s) = std::str::from_utf8(rest)
+            {
+                let (keys, status) = s.split_once(';').unwrap_or((s, ""));
+                let id = keys
+                    .split(',')
+                    .find_map(|kv| kv.strip_prefix("i="))
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(0);
+                let ok = status.starts_with("OK");
+                self.out.push_back(ParsedEvent::KittyGraphicsReply { id, ok });
             }
         }
     }

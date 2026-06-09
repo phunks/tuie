@@ -603,16 +603,12 @@ impl TextOverflow {
 
     /// Returns the display width of `grapheme` in cells at column `col`, expanding tabs to the
     /// next multiple of `tabstop` when set.
-    pub fn grapheme_display_width(
-        grapheme: &str,
-        col: usize,
-        tabstop: Option<u8>,
-    ) -> usize {
-        if let Some(tabstop) = tabstop {
-            if grapheme.as_bytes().first() == Some(&b'\t') {
-                let tabstop = tabstop as usize;
-                return tabstop - (col % tabstop);
-            }
+    pub fn grapheme_display_width(grapheme: &str, col: usize, tabstop: Option<u8>) -> usize {
+        if let Some(tabstop) = tabstop
+            && grapheme.as_bytes().first() == Some(&b'\t')
+        {
+            let tabstop = tabstop as usize;
+            return tabstop - (col % tabstop);
         }
         tuie::grapheme_width(grapheme)
     }

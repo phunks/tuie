@@ -1121,11 +1121,10 @@ mod braille {
 
     pub(super) fn draw(g: &mut Glyph, ch: char) {
         let mask = (ch as u32) - 0x2800;
-        for bit in 0..8 {
+        for (bit, &(col, row)) in DOT_GRID.iter().enumerate() {
             if mask & (1 << bit) == 0 {
                 continue;
             }
-            let (col, row) = DOT_GRID[bit];
             dot(g, col, row);
         }
     }
@@ -1133,9 +1132,9 @@ mod braille {
     fn layout(track: u32, dots: u32) -> ([u32; 4], u32) {
         let size = (track / (2 * dots)).max(1);
         let mut starts = [0u32; 4];
-        for i in 0..dots as usize {
+        for (i, start) in starts.iter_mut().take(dots as usize).enumerate() {
             let center = ((2 * i as u32 + 1) * track) / (2 * dots);
-            starts[i] = center.saturating_sub(size / 2);
+            *start = center.saturating_sub(size / 2);
         }
         (starts, size)
     }

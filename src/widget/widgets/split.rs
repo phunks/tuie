@@ -530,12 +530,13 @@ impl SplitChild {
         direction: Sign,
         gap: u16,
     ) -> bool {
-        if let SplitNode::Leaf(ref leaf) = self.node {
-            if leaf.widget.get_id() == target {
-                let parent_size = self.size.get();
-                let (existing_size, new_size) = halve_with_gap(parent_size[split_axis], gap);
+        if let SplitNode::Leaf(ref leaf) = self.node
+            && leaf.widget.get_id() == target
+        {
+            let parent_size = self.size.get();
+            let (existing_size, new_size) = halve_with_gap(parent_size[split_axis], gap);
 
-                let old_node = std::mem::replace(
+            let old_node = std::mem::replace(
                     &mut self.node,
                     SplitNode::Container {
                         orientation: split_axis,
@@ -569,7 +570,6 @@ impl SplitChild {
                 };
                 return true;
             }
-        }
         self.node.split(target, new_leaf, split_axis, direction, gap)
     }
 
@@ -1434,12 +1434,12 @@ impl SplitNode {
         let mut child_offset = offset;
 
         for (i, child) in children.iter().enumerate() {
-            if let SplitNode::Leaf(leaf) = &child.node {
-                if let Some(title) = &leaf.title {
-                    let has_row_above = i == 0
-                        || a != Axis2D::Y
-                        || gap_between(&children[i - 1], child, gap) > 0;
-                    if !title.is_empty() && has_row_above {
+            if let SplitNode::Leaf(leaf) = &child.node
+                && let Some(title) = &leaf.title
+            {
+                let has_row_above =
+                    i == 0 || a != Axis2D::Y || gap_between(&children[i - 1], child, gap) > 0;
+                if !title.is_empty() && has_row_above {
                         let title_y = child_offset.y - 1;
                         let title_x = child_offset.x;
                         let available = child.size.get()[Axis2D::X] as usize;
@@ -1457,7 +1457,6 @@ impl SplitNode {
                         }
                     }
                 }
-            }
 
             child.node.render_titles(
                 child_offset,
@@ -1752,11 +1751,11 @@ impl SplitNode {
 
         let mut target_idx = None;
         for (i, child) in children.iter().enumerate() {
-            if let SplitNode::Leaf(leaf) = &child.node {
-                if leaf.widget.get_id() == target {
-                    target_idx = Some(i);
-                    break;
-                }
+            if let SplitNode::Leaf(leaf) = &child.node
+                && leaf.widget.get_id() == target
+            {
+                target_idx = Some(i);
+                break;
             }
         }
 
@@ -2548,17 +2547,17 @@ impl Widget for Split {
                         continue;
                     }
                     crossed = true;
-                    if has_neg {
-                        if let Some(e) = edge_style_at(&d.edges, div.pos - 1) {
-                            cell_style = cell_style.apply(e.style);
-                            perp_neg = e.border.unwrap_or(fallback_border);
-                        }
+                    if has_neg
+                        && let Some(e) = edge_style_at(&d.edges, div.pos - 1)
+                    {
+                        cell_style = cell_style.apply(e.style);
+                        perp_neg = e.border.unwrap_or(fallback_border);
                     }
-                    if has_pos {
-                        if let Some(e) = edge_style_at(&d.edges, div.pos + 1) {
-                            cell_style = cell_style.apply(e.style);
-                            perp_pos = e.border.unwrap_or(fallback_border);
-                        }
+                    if has_pos
+                        && let Some(e) = edge_style_at(&d.edges, div.pos + 1)
+                    {
+                        cell_style = cell_style.apply(e.style);
+                        perp_pos = e.border.unwrap_or(fallback_border);
                     }
                 }
 
@@ -2953,11 +2952,11 @@ impl Split {
 
     /// Sets the layout `axis` of the root container.
     pub fn set_orientation(&mut self, axis: Axis2D) {
-        if let SplitNode::Container { orientation, .. } = &mut self.root.node {
-            if *orientation != axis {
-                *orientation = axis;
-                self.dirty_layout();
-            }
+        if let SplitNode::Container { orientation, .. } = &mut self.root.node
+            && *orientation != axis
+        {
+            *orientation = axis;
+            self.dirty_layout();
         }
     }
 

@@ -1330,16 +1330,19 @@ impl Widget for List {
         let a = self.orientation;
         let cross = a.flip();
 
-        if let Some(child_id) = child {
-            if let Some(wi) = self.items.iter().position(|item| item.widget.get_id() == child_id) {
-                let data_index = self.window_start + wi;
-                let offset = self.offset_from_anchor(wi);
-                self.anchor = Anchor {
-                    index: data_index,
-                    offset,
-                };
+        if let Some(child_id) = child
+            && let Some(wi) = self
+                .items
+                .iter()
+                .position(|item| item.widget.get_id() == child_id)
+        {
+            let data_index = self.window_start + wi;
+            let offset = self.offset_from_anchor(wi);
+            self.anchor = Anchor {
+                index: data_index,
+                offset,
+            };
             }
-        }
 
         let viewport = self.get_viewport();
         let vp_main = viewport[a] as i32;

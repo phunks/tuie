@@ -180,10 +180,10 @@ impl PlaceholderScanner {
         fg: Color,
         underline_color: Color,
     ) -> bool {
-        if let Some(run) = &self.run {
-            if run.screen_y != y {
-                self.flush(backend);
-            }
+        if let Some(run) = &self.run
+            && run.screen_y != y
+        {
+            self.flush(backend);
         }
 
         let parsed = Self::parse_placeholder(glyph, fg, underline_color);

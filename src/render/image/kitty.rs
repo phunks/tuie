@@ -26,10 +26,10 @@ impl PixelSlot {
 impl Drop for PixelSlot {
     fn drop(&mut self) {
         let _ = IMAGE_SYSTEM.try_with(|system| {
-            if let Ok(mut sys) = system.try_borrow_mut() {
-                if let Some(id) = self.id.get() {
-                    sys.free(id);
-                }
+            if let Ok(mut sys) = system.try_borrow_mut()
+                && let Some(id) = self.id.get()
+            {
+                sys.free(id);
             }
         });
     }
@@ -119,10 +119,10 @@ impl ImageSystem {
             .filter_map(|(i, s)| s.as_ref().map(|s| (i, s.last_used)))
             .min_by_key(|(_, t)| *t)
             .expect("eviction with no live slots, invariant violated");
-        if let Some(old) = &self.slots[idx] {
-            if let Some(rc) = old.weak.upgrade() {
-                rc.set_id(None);
-            }
+        if let Some(old) = &self.slots[idx]
+            && let Some(rc) = old.weak.upgrade()
+        {
+            rc.set_id(None);
         }
         self.slots[idx] = Some(new_slot);
         self.pid_high | idx as u32
@@ -257,13 +257,13 @@ fn build_transmit(
                 PixelFormat::Rgba => 32,
             };
             #[cfg(unix)]
-            if use_shm {
-                if let Some(name) = super::shm::write_image(image_id, pixels) {
-                    escape::transmit_raw_shm(
-                        out, image_id, bits_per_pixel, &name, *width, *height, tmux,
-                    );
-                    return true;
-                }
+            if use_shm
+                && let Some(name) = super::shm::write_image(image_id, pixels)
+            {
+                escape::transmit_raw_shm(
+                    out, image_id, bits_per_pixel, &name, *width, *height, tmux,
+                );
+                return true;
             }
             escape::transmit_raw(out, image_id, bits_per_pixel, pixels, *width, *height, tmux);
             true
@@ -271,23 +271,23 @@ fn build_transmit(
         SourceData::Encoded { bytes, dims, format } => {
             if *format == image::ImageFormat::Png {
                 #[cfg(unix)]
-                if use_shm {
-                    if let Some(name) = super::shm::write_image(image_id, bytes) {
-                        escape::transmit_png_shm(out, image_id, &name, tmux);
-                        return true;
-                    }
+                if use_shm
+                    && let Some(name) = super::shm::write_image(image_id, bytes)
+                {
+                    escape::transmit_png_shm(out, image_id, &name, tmux);
+                    return true;
                 }
                 escape::transmit_png(out, image_id, bytes, tmux);
                 true
             } else if let Some(rgba) = decoded {
                 #[cfg(unix)]
-                if use_shm {
-                    if let Some(name) = super::shm::write_image(image_id, rgba) {
-                        escape::transmit_raw_shm(
-                            out, image_id, 32, &name, dims.x, dims.y, tmux,
-                        );
-                        return true;
-                    }
+                if use_shm
+                    && let Some(name) = super::shm::write_image(image_id, rgba)
+                {
+                    escape::transmit_raw_shm(
+                        out, image_id, 32, &name, dims.x, dims.y, tmux,
+                    );
+                    return true;
                 }
                 escape::transmit_raw(out, image_id, 32, rgba, dims.x, dims.y, tmux);
                 true

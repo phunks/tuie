@@ -286,10 +286,10 @@ fn for_each_in_path(
         if idx >= start && idx < end {
             f(widget);
         }
-        if idx + 1 < path.len() {
-            if let Some(child) = widget.get_child_mut(path[idx + 1]) {
-                inner(child, path, idx + 1, start, end, f);
-            }
+        if idx + 1 < path.len()
+            && let Some(child) = widget.get_child_mut(path[idx + 1])
+        {
+            inner(child, path, idx + 1, start, end, f);
         }
     }
     inner(widget, path, idx, start, end, &mut f);
@@ -320,14 +320,19 @@ fn for_each_edge_in_path(
     inner(widget, path, idx, &mut f);
 }
 
-fn emit_along_path(widget: &mut dyn Widget, path: &[WidgetId], idx: usize, event: &mut WidgetEvent) {
+fn emit_along_path(
+    widget: &mut dyn Widget,
+    path: &[WidgetId],
+    idx: usize,
+    event: &mut WidgetEvent,
+) {
     if idx >= path.len() || widget.get_id() != path[idx] {
         return;
     }
-    if idx + 1 < path.len() {
-        if let Some(child) = widget.get_child_mut(path[idx + 1]) {
-            emit_along_path(child, path, idx + 1, event);
-        }
+    if idx + 1 < path.len()
+        && let Some(child) = widget.get_child_mut(path[idx + 1])
+    {
+        emit_along_path(child, path, idx + 1, event);
     }
     widget.on_event(event);
 }
@@ -2324,4 +2329,3 @@ impl std::fmt::Display for dyn Widget {
         self.debug(f)
     }
 }
-

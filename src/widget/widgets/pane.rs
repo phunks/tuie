@@ -832,9 +832,9 @@ impl Pane {
 
         let mut line_offsets = Vec::with_capacity(num_lines);
         let mut cross_cursor = 0i32;
-        for line in 0..num_lines {
+        for &line_cross in &line_cross_sizes {
             line_offsets.push(cross_cursor);
-            cross_cursor += line_cross_sizes[line] as i32 + gap_cross;
+            cross_cursor += line_cross as i32 + gap_cross;
         }
 
         for line in 0..num_lines {
@@ -1194,23 +1194,22 @@ impl Widget for Pane {
             if share_corner
                 && self.get_inset_after(Axis2D::Y) == 0
                 && self.get_inset_after(Axis2D::X) == 0
+                && let ScrollbarThumb::Border(b) = thumb
             {
-                if let ScrollbarThumb::Border(b) = thumb {
-                    let reaches = Axis2D::map(|a| {
-                        thumb.has_half_cell(a) && {
-                            let view = viewport[a] as f32 + half[a]
-                                - self.get_inset_before(a) as f32
-                                - self.get_inset_after(a) as f32;
-                            sc.scrollbar[a].thumb_reaches_corner_half(view, thumb.get_subpixels(a) as f32)
-                        }
-                    });
-                    let x_in = reaches[Axis2D::X];
-                    let y_in = reaches[Axis2D::Y];
-                    if x_in || y_in {
-                        ctx.move_to(border + Vec2::new(viewport.x as i32 + y_sb_gutter - 1, viewport.y as i32 + x_sb_gutter - 1));
-                        ctx.set_style(sc.style.get_resolved().thumb_style);
-                        write!(ctx, "{}", b.get_arms(x_in, false, y_in, false));
+                let reaches = Axis2D::map(|a| {
+                    thumb.has_half_cell(a) && {
+                        let view = viewport[a] as f32 + half[a]
+                            - self.get_inset_before(a) as f32
+                            - self.get_inset_after(a) as f32;
+                        sc.scrollbar[a].thumb_reaches_corner_half(view, thumb.get_subpixels(a) as f32)
                     }
+                });
+                let x_in = reaches[Axis2D::X];
+                let y_in = reaches[Axis2D::Y];
+                if x_in || y_in {
+                    ctx.move_to(border + Vec2::new(viewport.x as i32 + y_sb_gutter - 1, viewport.y as i32 + x_sb_gutter - 1));
+                    ctx.set_style(sc.style.get_resolved().thumb_style);
+                    write!(ctx, "{}", b.get_arms(x_in, false, y_in, false));
                 }
             }
         }
@@ -1896,7 +1895,7 @@ impl Pane {
     pub fn get_scrollbar_style(&self) -> ScrollbarStyle {
         self.get_scroll_cfg()
             .map(|sc| sc.style.clone())
-            .unwrap_or_else(ScrollbarStyle::new)
+            .unwrap_or_default()
     }
 
     /// Sets the scrollbar style.

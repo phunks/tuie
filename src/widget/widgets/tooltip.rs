@@ -93,58 +93,50 @@ impl Widget for Tooltip {
     fn render(&self, mut ctx: crate::render::RenderContext) {
         let anchor_pos = self.anchor.get_pos() - self.layout.rect.pos;
         ctx.render_child(&*self.anchor, anchor_pos);
-        if self.visible {
-            if let Some(body) = &self.body {
-                let body_pos = body.get_pos() - self.layout.rect.pos;
-                ctx.render_child(&**body, body_pos);
-            }
+        if self.visible
+            && let Some(body) = &self.body
+        {
+            let body_pos = body.get_pos() - self.layout.rect.pos;
+            ctx.render_child(&**body, body_pos);
         }
     }
 
-    fn each_child(
-        &self,
-        f: &mut dyn FnMut(&dyn Widget),
-        direction: Sign,
-    ) {
+    fn each_child(&self, f: &mut dyn FnMut(&dyn Widget), direction: Sign) {
         match direction {
             Sign::Positive => {
                 f(&*self.anchor);
-                if self.visible {
-                    if let Some(body) = &self.body {
-                        f(&**body);
-                    }
+                if self.visible
+                    && let Some(body) = &self.body
+                {
+                    f(&**body);
                 }
             }
             Sign::Negative => {
-                if self.visible {
-                    if let Some(body) = &self.body {
-                        f(&**body);
-                    }
+                if self.visible
+                    && let Some(body) = &self.body
+                {
+                    f(&**body);
                 }
                 f(&*self.anchor);
             }
         }
     }
 
-    fn each_child_mut(
-        &mut self,
-        f: &mut dyn FnMut(&mut dyn Widget),
-        direction: Sign,
-    ) {
+    fn each_child_mut(&mut self, f: &mut dyn FnMut(&mut dyn Widget), direction: Sign) {
         match direction {
             Sign::Positive => {
                 f(&mut *self.anchor);
-                if self.visible {
-                    if let Some(body) = &mut self.body {
-                        f(&mut **body);
-                    }
+                if self.visible
+                    && let Some(body) = &mut self.body
+                {
+                    f(&mut **body);
                 }
             }
             Sign::Negative => {
-                if self.visible {
-                    if let Some(body) = &mut self.body {
-                        f(&mut **body);
-                    }
+                if self.visible
+                    && let Some(body) = &mut self.body
+                {
+                    f(&mut **body);
                 }
                 f(&mut *self.anchor);
             }

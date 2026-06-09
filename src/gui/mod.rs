@@ -288,10 +288,10 @@ impl GuiState {
     fn reload_font_if_needed(&mut self) {
         let cfg = config::get();
         let target = cfg.font_size * self.scale as f32;
-        if (self.font.get_px_size() - target).abs() > f32::EPSILON {
-            if let Err(e) = self.font.set_pixel_size(target) {
-                eprintln!("tuie gui: font resize failed: {e}");
-            }
+        if (self.font.get_px_size() - target).abs() > f32::EPSILON
+            && let Err(e) = self.font.set_pixel_size(target)
+        {
+            eprintln!("tuie gui: font resize failed: {e}");
         }
     }
 
@@ -553,12 +553,7 @@ impl ApplicationHandler for GuiState {
         self.pending_events.push(RuntimeEvent::Focus(true));
     }
 
-    fn window_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _id: WindowId,
-        event: WindowEvent,
-    ) {
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
                 self.exit_code = Some(0);
@@ -594,16 +589,16 @@ impl ApplicationHandler for GuiState {
             WindowEvent::KeyboardInput {
                 event: key_event, ..
             } => {
-                if key_event.state == ElementState::Pressed {
-                    if let Some(chord) = winit_key_to_chord(&key_event, self.modifiers) {
-                        self.cursor_blink_anchor = std::time::Instant::now();
-                        crate::dirty_paint();
-                        self.pending_events.push(RuntimeEvent::Input(InputEvent {
-                            chord,
-                            pos: self.pack_mouse_pos(),
-                            count: 1,
-                        }));
-                    }
+                if key_event.state == ElementState::Pressed
+                    && let Some(chord) = winit_key_to_chord(&key_event, self.modifiers)
+                {
+                    self.cursor_blink_anchor = std::time::Instant::now();
+                    crate::dirty_paint();
+                    self.pending_events.push(RuntimeEvent::Input(InputEvent {
+                        chord,
+                        pos: self.pack_mouse_pos(),
+                        count: 1,
+                    }));
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
@@ -924,10 +919,10 @@ fn render_grid_pass(
             return;
         }
         backend.push_cell(x, y, glyph, &cell, font);
-        if let Some((cx, cy)) = cursor_xy {
-            if cx == x as i32 && cy == y as i32 {
-                cursor_overlay = Some((x, y, glyph.to_string(), *style, wide));
-            }
+        if let Some((cx, cy)) = cursor_xy
+            && cx == x as i32 && cy == y as i32
+        {
+            cursor_overlay = Some((x, y, glyph.to_string(), *style, wide));
         }
     });
     #[cfg(feature = "images")]
@@ -1062,12 +1057,12 @@ fn drain_offset_entries(
         let Some(entry) = renderer.pop_defer_entry() else {
             break;
         };
-        if let Some(dc) = deferred {
-            if !cursor_painted
-                && cursor_clip_slot.is_some()
-                && !matches!(entry.kind, crate::render::Kind::Offset { .. })
-            {
-                paint_deferred_cursor(
+        if let Some(dc) = deferred
+            && !cursor_painted
+            && cursor_clip_slot.is_some()
+            && !matches!(entry.kind, crate::render::Kind::Offset { .. })
+        {
+            paint_deferred_cursor(
                     backend,
                     font,
                     &dc,
@@ -1078,7 +1073,6 @@ fn drain_offset_entries(
                 );
                 cursor_painted = true;
             }
-        }
         
         let screen_pos_px: Vec2<i32>;
         let scissor: Option<(Vec2<i32>, Vec2<u32>)>;
@@ -1206,9 +1200,10 @@ fn drain_offset_entries(
         }
         backend.flush_passes(cell_px, screen_pos_px, is_layer, pass_scissor, bg_alpha);
     }
-    if let Some(dc) = deferred {
-        if !cursor_painted {
-            paint_deferred_cursor(
+    if let Some(dc) = deferred
+        && !cursor_painted
+    {
+        paint_deferred_cursor(
                 backend,
                 font,
                 &dc,
@@ -1218,7 +1213,6 @@ fn drain_offset_entries(
                 cursor_overlay_slot.clone(),
             );
         }
-    }
 }
 
 fn winit_modifiers_to_tuie(m: ModifiersState) -> Modifiers {
