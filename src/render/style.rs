@@ -259,12 +259,12 @@ impl Style {
     }
 
     /// Returns the raw packed bits for all boolean attribute flags.
-    pub const fn get_attrs_bits(&self) -> u8 {
+    pub(crate) const fn get_attrs_bits(&self) -> u8 {
         self.attrs
     }
 
     /// Returns the mask of which boolean attribute flags are explicitly set in this style.
-    pub const fn get_attrs_mask(&self) -> u8 {
+    pub(crate) const fn get_attrs_mask(&self) -> u8 {
         self.mask
     }
 
