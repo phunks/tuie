@@ -98,6 +98,7 @@ pub mod prelude {
 
     pub use super::widget::align::Align;
     pub use super::widget::align::FlexAlign;
+    pub use super::widget::align::FlexWrap;
     pub use super::widget::align::Place;
     pub use super::render::border::Border;
     pub use super::render::border::BorderConfig;

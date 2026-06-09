@@ -68,6 +68,25 @@ impl From<Align> for FlexAlign {
     }
 }
 
+/// How items overflow onto additional lines along the main axis.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FlexWrap {
+    /// Packs as many items as fit on each line before starting the next.
+    #[default]
+    Greedy,
+    /// Distributes items across lines so each holds a similar amount.
+    Balanced,
+}
+
+impl std::fmt::Display for FlexWrap {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Greedy => write!(f, "Greedy"),
+            Self::Balanced => write!(f, "Balanced"),
+        }
+    }
+}
+
 /// Parent-side positioning and slack distribution along an axis.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]

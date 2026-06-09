@@ -62,7 +62,7 @@ impl ScrollConfig {
 }
 
 struct WrapConfig {
-    balanced: bool,
+    mode: FlexWrap,
     cross_gap: u8,
     line_starts: Vec<usize>,
     resolved_size: Vec2<u16>,
@@ -71,7 +71,7 @@ struct WrapConfig {
 impl Default for WrapConfig {
     fn default() -> Self {
         Self {
-            balanced: false,
+            mode: FlexWrap::Greedy,
             cross_gap: 0,
             line_starts: Vec::new(),
             resolved_size: Vec2::of(0),
@@ -222,7 +222,7 @@ impl Pane {
     }
 
     fn get_children_extent(&self) -> Vec2<u32> {
-        if let Some(w) = self.get_wrap() {
+        if let Some(w) = self.get_wrap_cfg() {
             return Axis2D::map(|a| w.resolved_size[a] as u32);
         }
         let axis = self.orientation;
@@ -528,16 +528,16 @@ impl Pane {
         }
     }
 
-    fn get_wrap(&self) -> Option<&WrapConfig> {
+    fn get_wrap_cfg(&self) -> Option<&WrapConfig> {
         self.wrap.as_deref()
     }
 
-    fn get_wrap_mut(&mut self) -> &mut WrapConfig {
+    fn get_wrap_cfg_mut(&mut self) -> &mut WrapConfig {
         self.wrap.get_or_insert_with(Default::default)
     }
 
     fn line_range(&self, line: usize) -> std::ops::Range<usize> {
-        let cfg = self.get_wrap().expect("line_range requires wrap config");
+        let cfg = self.get_wrap_cfg().expect("line_range requires wrap config");
         let start = cfg.line_starts[line];
         let end = if line + 1 < cfg.line_starts.len() {
             cfg.line_starts[line + 1]
@@ -566,8 +566,8 @@ impl Pane {
         let container_main = inner[main_axis];
         let container_cross = inner[cross_axis];
         let gap_main = self.gap as u16;
-        let (gap_cross, balanced) = match self.get_wrap() {
-            Some(w) => (w.cross_gap as u16, w.balanced),
+        let (gap_cross, balanced) = match self.get_wrap_cfg() {
+            Some(w) => (w.cross_gap as u16, w.mode == FlexWrap::Balanced),
             None => (0, false),
         };
         let cross_mode: FlexAlign = self.align.get_place(cross_axis).try_into().unwrap_or(FlexAlign::Start);
@@ -810,12 +810,12 @@ impl Pane {
         let inner = self.get_inner_content_size();
         let container_main = inner[main_axis] as i32;
         let gap_main = self.gap as i32;
-        let gap_cross = self.get_wrap().map(|w| w.cross_gap as i32).unwrap_or(0);
+        let gap_cross = self.get_wrap_cfg().map(|w| w.cross_gap as i32).unwrap_or(0);
         let place_main = self.align.get_place(main_axis);
         let place_cross = self.align.get_place(cross_axis);
         let main_mode: FlexAlign = place_main.try_into().unwrap_or(FlexAlign::Start);
         let cross_mode: FlexAlign = place_cross.try_into().unwrap_or(FlexAlign::Start);
-        let num_lines = self.get_wrap().map(|w| w.line_starts.len()).unwrap_or(0);
+        let num_lines = self.get_wrap_cfg().map(|w| w.line_starts.len()).unwrap_or(0);
         if num_lines == 0 {
             return;
         }
@@ -927,7 +927,7 @@ impl Pane {
         let physical_start = child_ctx.pos[a] as i32;
         let physical_end = physical_start + child_ctx.physical_size[a] as i32;
         let anchor = child_ctx.anchor;
-        let monotonic = !self.is_wrapping();
+        let monotonic = !self.wrap.is_some();
         for child in self.children.iter() {
             let child_pos = child.get_pos();
             let slot_size_a = child.get_rect_size()[a] as i32;
@@ -983,7 +983,7 @@ impl Widget for Pane {
 
     fn measure_constraints(&mut self) -> Constraints {
         self.each_child_mut(&mut constrain_child, Sign::Positive);
-        let wrapping = self.is_wrapping();
+        let wrapping = self.wrap.is_some();
         let min_size = Axis2D::map(|a| {
             let chrome = self.get_axis_overhead(a);
             let children_min = if wrapping {
@@ -1025,7 +1025,7 @@ impl Widget for Pane {
 
     fn layout_position(&mut self) {
         self.clamp_scroll();
-        if self.is_wrapping() {
+        if self.wrap.is_some() {
             self.wrap_layout_position();
             return;
         }
@@ -1373,12 +1373,12 @@ impl Widget for Pane {
     }
 
     fn layout_flow(&mut self, allocated: Vec2<u16>) -> Vec2<u16> {
-        if self.is_wrapping() {
+        if self.wrap.is_some() {
             let inner_size = WRAP_POOL.with(|p| {
                 let mut scratch = p.acquire();
                 let size = self.wrap_resolve(allocated, &mut scratch);
                 self.wrap_commit_layout(&scratch);
-                let cfg = self.get_wrap_mut();
+                let cfg = self.get_wrap_cfg_mut();
                 cfg.line_starts.clear();
                 cfg.line_starts.extend_from_slice(&scratch.line_starts);
                 cfg.resolved_size = size;
@@ -1398,7 +1398,7 @@ impl Widget for Pane {
     }
 
     fn layout_measure(&self, allocated: Vec2<u16>) -> Vec2<u16> {
-        if self.is_wrapping() {
+        if self.wrap.is_some() {
             let inner_size = WRAP_POOL.with(|p| {
                 let mut scratch = p.acquire();
                 let size = self.wrap_resolve(allocated, &mut scratch);
@@ -1826,13 +1826,8 @@ impl Pane {
     }
 
     crate::layout_field! {
-        /// Whether overflowing children wrap onto a new line.
-        wrap as is_wrapping: bool => wrap?
-    }
-
-    crate::layout_field! {
-        /// Whether wrapped children are distributed evenly across lines.
-        balanced: bool => wrap?.balanced
+        /// How overflowing children wrap onto new lines.
+        wrap: FlexWrap => wrap?.mode
     }
 
     crate::layout_field! {

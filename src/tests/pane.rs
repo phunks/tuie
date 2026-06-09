@@ -205,7 +205,7 @@ fn chip(label: &'static str) -> Box<dyn Widget> {
 }
 
 fn wrap() -> Box<Pane> {
-    Pane::new().horizontal().wrap()
+    Pane::new().horizontal().wrap(FlexWrap::Greedy)
 }
 
 #[test]
@@ -251,7 +251,7 @@ fn children_wrap_when_exceeding_width() {
 fn vertical_orientation_wraps_into_columns() {
     let mut w = Pane::new()
         .vertical()
-        .wrap()
+        .wrap(FlexWrap::Greedy)
         .x_place(Place::Start)
         .child(chip("A"))
         .child(chip("B"))
