@@ -231,7 +231,9 @@ impl ScrollbarState {
         }
         let old_display = self.display_progress();
         self.progress = new_progress;
-        if let Some((anchor_in, anchor_out)) = self.remap {
+        if new_progress <= 0.0 || new_progress >= 1.0 {
+            self.remap = None;
+        } else if let Some((anchor_in, anchor_out)) = self.remap {
             let new_display = piecewise_remap(new_progress, anchor_in, anchor_out);
             self.remap = Some((new_progress, new_display));
         } else if new_progress != old_display {
@@ -470,6 +472,16 @@ impl ScrollbarState {
 }
 
 fn piecewise_remap(progress: f32, anchor_in: f32, anchor_out: f32) -> f32 {
+    // Piecewise-linearly remaps `progress` so that:
+    //   0.0 maps to 0.0,
+    //   `anchor_in` maps to `anchor_out`,
+    //   1.0 maps to 1.0.
+    if progress <= 0.0 {
+        return 0.0;
+    }
+    if progress >= 1.0 {
+        return 1.0;
+    }
     if anchor_in <= 0.0 {
         return (anchor_out + progress * (1.0 - anchor_out)).clamp(0.0, 1.0);
     }
@@ -536,4 +548,12 @@ pub enum ScrollbarInputResult {
     Handled(Option<f32>),
     /// Chord was not relevant to the scrollbar.
     Rejected,
+}
+
+#[test]
+fn set_progress_to_endpoint_clears_remap() {
+    let mut state = ScrollbarState::new();
+    state.set_progress(0.3);   // creates remap (0.3, 0.0)
+    state.set_progress(1.0);   // endpoint -> remap must be cleared
+    assert_eq!(state.display_progress(), 1.0);
 }

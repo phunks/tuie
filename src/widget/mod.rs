@@ -1287,7 +1287,8 @@ pub fn flow_child(child: &mut dyn Widget, size: Vec2<u16>) -> Vec2<u16> {
     let layout = child.get_layout();
     let margin = layout.get_margin_total();
     let content_alloc = Axis2D::map(|a| size[a].saturating_sub(margin[a]));
-    let hit = layout.flags.get(LayoutFlags::FLOW_LAYOUT_VALID)
+    let hit = layout.get_dirty() != DirtyImpact::Layout
+        && layout.flags.get(LayoutFlags::FLOW_LAYOUT_VALID)
         && content_alloc == layout.flow_layout.input_size;
 
     if hit {

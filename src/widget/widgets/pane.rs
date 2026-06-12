@@ -227,15 +227,22 @@ impl Pane {
         }
         let axis = self.orientation;
         let cross = axis.flip();
+        let child_extent = |child: &Box<dyn Widget>, a: Axis2D| -> u16 {
+            if self.is_scroll_enabled(a) {
+                flow_output_size(child.get_layout())[a]
+            } else {
+                child.get_outer_size()[a]
+            }
+        };
         let mut extent = Vec2::of(0u32);
         extent[axis] = self.children.iter()
-            .map(|c| c.get_outer_size()[axis] as u32)
+            .map(|c| child_extent(c, axis) as u32)
             .fold(0u32, u32::saturating_add)
             .saturating_add(self.get_gap_total());
         extent[cross] = self.children.iter()
-            .map(|c| c.get_outer_size()[cross] as u32)
+            .map(|c| child_extent(c, cross))
             .max()
-            .unwrap_or(0);
+            .unwrap_or(0) as u32;
         extent
     }
 
@@ -1417,6 +1424,22 @@ impl Widget for Pane {
     fn after_layout(&mut self) {
         if self.resolve_bar_visibility() {
             self.dirty_layout();
+            return;
+        }
+        // At this point every child's flow output is committed and this pane's
+        // own viewport (including the scrollbar gutter) is finalized, because
+        // `resolve_bar_visibility` reported no further change. Recompute the
+        // scroll clamp and the scrollbar ratio/progress from this authoritative
+        // viewport/content-size pair.
+        //
+        // Doing it only inside `layout_flow` is not enough: there the gutter and
+        // the child sizes can come from different passes, so the viewport and the
+        // content size are momentarily inconsistent. That mismatch makes the
+        // thumb size (ratio) and the "end" position drift right after a child's
+        // content height changes (e.g. swapping the detail text).
+        if self.is_scrolling() {
+            self.clamp_scroll();
+            self.sync_scrollbars();
         }
     }
 
